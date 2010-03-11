@@ -1,2 +1,5 @@
-*.DS_Store
-ebin/*
+.DS_Store
+erl_crash.dump
+ebin/
+doc/
+*.out/
