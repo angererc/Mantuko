@@ -16,7 +16,7 @@ debug(String, Params) ->
 	display_string(?DEBUG, String, Params).
 	
 display_string(Level, String, Params) ->
-	global_options:do_if_global_option_predicate(
+	global_options:do_if_option_predicate(
 		fun()-> io_lib:format(String, Params) end, 
 		trace_verbosity, 
 		fun(OptLevel) -> OptLevel >= Level end, -1					

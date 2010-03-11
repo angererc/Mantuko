@@ -1,8 +1,8 @@
 -module (global_options).
 
--export ([set_global_options/1, tear_down_global_options/0]).
--export ([do_if_global_option_equals/4, do_if_global_option_predicate/4]).
--export ([global_option/1, global_option/2]).
+-export ([set/1, tear_down/0]).
+-export ([do_if_option_equals/4, do_if_option_predicate/4]).
+-export ([get/1, get/2]).
 
 % @type global_options() = [global_option()].
 
@@ -14,30 +14,30 @@
 % * trace_level defines which entries will be kept
 % FATAL = 1, SEVERE = 2, WARNING = 3, TRACE = 5, TRACE_VERBOSE = 5, LOG = 6, DEBUG = 7
 
-set_global_options(OptionOrOptions) ->
+set(OptionOrOptions) ->
 	lazy_ets:insert(global_options, OptionOrOptions).
 	
-tear_down_global_options() ->
+tear_down() ->
 	lazy_ets:delete(global_options).
 		
 % -> Fun() | false
-do_if_global_option_equals(Fun, Option, Value, Default) ->
-	OptValue = global_option(Option, Default),
+do_if_option_equals(Fun, Option, Value, Default) ->
+	OptValue = global_options:get(Option, Default),
 	if
 		OptValue =:= Value -> Fun();
 		true -> false
 	end.
 	
-do_if_global_option_predicate(Fun, Option, Pred, Default) ->
-	case Pred(global_option(Option, Default)) of
+do_if_option_predicate(Fun, Option, Pred, Default) ->
+	case Pred( global_options:get(Option, Default)) of
 		true -> Fun();
 		false -> false
 	end.
 
-global_option(Option) ->
-	global_option(Option, undefined).
+get(Option) ->
+	 global_options:get(Option, undefined).
 		
-global_option(Option, Default) ->
+get(Option, Default) ->
 	case lazy_ets:lookup(global_options, Option) of
 		[{Option, Value}] ->
 			Value;
