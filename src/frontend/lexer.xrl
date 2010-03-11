@@ -32,7 +32,9 @@ Rules.
 \%		: {token,{percent,TokenLine}}. %used for registers
 
 this	: {token,{this,TokenLine}}.
-new		: {token,{new,TokenLine}}.
+struct	: {token,{struct,TokenLine}}.
+array	: {token,{array,TokenLine}}.
+lock	: {token,{lock,TokenLine}}.
 nil		: {token,{nil, TokenLine}}.
 now		: {token,{now, TokenLine}}.
 fork	: {token,{fork, TokenLine}}.

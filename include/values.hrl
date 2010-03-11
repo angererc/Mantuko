@@ -114,9 +114,20 @@
 % Example: <pre>this</pre>
 -record (this, {}).
 
-% @type new().
-% Example: <pre>new</pre>
--record (new, {}).
+% @type struct().
+% creates a new struct
+% Example: <pre>struct</pre>
+-record (struct, {}).
+
+% @type array().
+% creates a new array
+% Example: <pre>array</pre>
+-record (array, {}).
+
+% @type lock().
+% creates a new lock
+% Example: <pre>lock</pre>
+-record (lock, {}).
 
 % @type now().
 % Example: <pre>now</pre>

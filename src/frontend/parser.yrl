@@ -15,7 +15,8 @@ Terminals
 tick comma equals
 lparen rparen lcurl rcurl lsquare rsquare
 ident num
-this new nil now
+this nil now
+struct array lock
 percent fork
 act_block act_struct
 colon
@@ -112,7 +113,9 @@ value -> symbol : '$1'.
 value -> number : '$1'.
 value -> block : '$1'.
 value -> this : #this{}.
-value -> new : #new{}.
+value -> struct : #struct{}.
+value -> array : #array{}.
+value -> lock : #lock{}.
 value -> nil : #nil{}.
 value -> now : #now{}.
 value -> activation_value act_block : #act_block{activation='$1'}.
@@ -137,7 +140,7 @@ activation_lhs -> slot_or_reg : '$1'.
 activation_lhs -> block : '$1'.
 
 activation_rhs -> slot_or_reg : '$1'.
-activation_rhs -> new : #new{}.
+activation_rhs -> struct : #struct{}.
 activation_rhs -> this : #this{}.
 
 Erlang code.

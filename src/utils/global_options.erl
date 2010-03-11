@@ -14,12 +14,11 @@
 % * trace_level defines which entries will be kept
 % FATAL = 1, SEVERE = 2, WARNING = 3, TRACE = 5, TRACE_VERBOSE = 5, LOG = 6, DEBUG = 7
 
-set_global_options(Options) ->
-	ets:new(global_options, [set, protected, named_table]),
-	ets:insert(global_options, Options).
+set_global_options(Options) when is_list(Options) ->
+	lazy_ets:insert(global_options, Options).
 	
 tear_down_global_options() ->
-	ets:delete(global_options).
+	lazy_ets:delete(global_options).
 		
 % -> Fun() | false
 do_if_global_option_equals(Fun, Option, Value, Default) ->
@@ -39,9 +38,10 @@ global_option(Option) ->
 	global_option(Option, undefined).
 		
 global_option(Option, Default) ->
-	case ets:lookup(global_options, Option) of
+	case lazy_ets:lookup(global_options, Option) of
 		[{Option, Value}] ->
 			Value;
-		_Else ->
+		undefined ->
 			Default
 	end.
+	

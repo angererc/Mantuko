@@ -19,7 +19,9 @@ assembler_syntax_test() ->
 			;other block
 		}
 		%reg = this
-		%reg = new
+		%reg = struct
+		%reg = array
+		%reg = lock
 		%reg= nil
 		%reg =now
 		%reg=%reg[%reg]
@@ -38,7 +40,7 @@ assembler_syntax_test() ->
 		
 		%reg = :somemacro
 		%reg = fork :somemacro(this)
-		%reg = fork :somemacro(new)
+		%reg = fork :somemacro(struct)
 		
 		;store variant 1
 		%reg[%reg] = %reg['foo]
@@ -48,7 +50,9 @@ assembler_syntax_test() ->
 			;other block
 		}
 		%reg[%reg] = this[42]
-		%reg[%reg] = new
+		%reg[%reg] = struct
+		%reg[%reg] = array
+		%reg[%reg] = lock
 		%reg[%reg] = nil
 		%reg[%reg] = now
 		
@@ -60,7 +64,9 @@ assembler_syntax_test() ->
 			;other block
 		}
 		%reg[1] = this[%reg]
-		%reg[1] = new
+		%reg[1] = struct
+		%reg[1] = array
+		%reg[1] = lock
 		%reg[1] = nil
 		%reg[1] = now
 		
@@ -72,7 +78,9 @@ assembler_syntax_test() ->
 			;other block
 		}
 		this[%reg] = this
-		this[%reg] = new
+		this[%reg] = struct
+		this[%reg] = array
+		this[%reg] = lock
 		this[%reg] = nil
 		this[%reg] = now
 		
@@ -89,17 +97,17 @@ assembler_syntax_test() ->
 		
 		;activations variant 1
 		fork %reg(%reg)
-		fork %reg(new)
+		fork %reg(struct)
 		fork {}(%reg)
-		fork {}(new)
-		fork :othermacro(new)
+		fork {}(struct)
+		fork :othermacro(struct)
 		fork this['foo](this['bar])
 		
 		;activations variant 2
 		%reg = fork %reg(%reg)
-		%reg = fork %reg(new)
+		%reg = fork %reg(struct)
 		%reg = fork {}(%reg)
-		%reg = fork {}(new)
+		%reg = fork {}(struct)
 	}"),
 	true = loader:contains_block({main}, Repository),
 	true = loader:contains_block(othermacro, Repository),
