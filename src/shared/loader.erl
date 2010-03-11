@@ -7,8 +7,8 @@
 
 -define (BLOCK_ID_POS, 2).
 
-% @type code_repository().
-% For now, the code_repository is a list of blocks.
+% @type loader().
+% For now, the loader is a list of blocks.
 
 new() ->
 	[].
@@ -16,18 +16,18 @@ new() ->
 %internal helper
 parse(Filename, String) ->
 	case parser:parse_from_string(Filename, String) of
-		{ok, Repository} ->	
-			Repository;
+		{ok, Loader} ->	
+			Loader;
 		{error, Reason} ->
 			events:fatal("Parser error in program parsed from ~80p. Reason: ~80p", [Filename, Reason]),
 			{error, Reason}
 	end.
 				
-% @spec load_from_string(string()) -> code_repository()
+% @spec load_from_string(string()) -> loader()
 load_from_string(String) ->
 	parse("<parsed from string>", String).
 
-% @spec load_from_file(string()) -> code_repository()
+% @spec load_from_file(string()) -> loader()
 load_from_file(Filename) ->
 	case file:read_file(Filename) of
 		{ok, Binary} ->
@@ -37,31 +37,31 @@ load_from_file(Filename) ->
 			{error, Reason}
 	end.
 	
-% @spec get_block(atom(), code_repository()) -> values:block() | false
-get_block(BlockID, Repository) ->
-	case lists:keysearch(BlockID, ?BLOCK_ID_POS, Repository) of
+% @spec get_block(atom(), loader()) -> values:block() | false
+get_block(BlockID, Loader) ->
+	case lists:keysearch(BlockID, ?BLOCK_ID_POS, Loader) of
 		{value, Block} -> Block;
 		false -> false
 	end.
 	
-% @spec contains_block(atom(), code_repository()) -> true | false
-contains_block(BlockID, Repository) ->
-	case lists:keysearch(BlockID, ?BLOCK_ID_POS, Repository) of
+% @spec contains_block(atom(), loader()) -> true | false
+contains_block(BlockID, Loader) ->
+	case lists:keysearch(BlockID, ?BLOCK_ID_POS, Loader) of
 		false -> false;
 		_Else -> true
 	end.
 	
 % returns false and logs a fatal error if block does already exist
-% @spec add_block(atom(), code_repository()) -> code_repository() | false
-add_block(#block{name=Name}=B, Repository) ->
-	case contains_block(Name, Repository) of
-		false -> [B|Repository];
+% @spec add_block(atom(), loader()) -> loader() | false
+add_block(#block{name=Name}=B, Loader) ->
+	case contains_block(Name, Loader) of
+		false -> [B|Loader];
 		true -> 
 			events:fatal("A block with name '~w' already exists", [Name]),
 			false
 	end.
 	
-add_all_blocks([], Repository) ->
-	Repository;
-add_all_blocks([B|Rest], Repository) ->
-	add_all_blocks(Rest, add_block(B, Repository)).
+add_all_blocks([], Loader) ->
+	Loader;
+add_all_blocks([B|Rest], Loader) ->
+	add_all_blocks(Rest, add_block(B, Loader)).

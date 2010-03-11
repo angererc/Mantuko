@@ -14,13 +14,14 @@ analyze_string(String, Options) ->
 	
 analyze({error, Reason}, _Options) ->
 	events:fatal("load error: ~p", [Reason]);
-analyze(Repository, Options) ->
+analyze(Loader, Options) ->
 	global_options:set(Options),
-	_Repository2 = create_init_and_exit_blocks(Repository),
+	Loader2 = create_init_and_exit_blocks(Loader),
 	
 	%create an option node here and start analyzing it
-	InitialNode = #option_node{},
-	node:analyze(InitialNode),
+	InitialHeap = someheap,
+	InitialNode = #option_node{block={init}, this=noidea},
+	node:analyze(InitialNode, InitialHeap, Loader2),
 	
 	events:log("analysis comes ~w", [here]).
 	
@@ -28,7 +29,7 @@ analyze(Repository, Options) ->
 	
 % *********************
 % *********************
-create_init_and_exit_blocks(Repository) ->
+create_init_and_exit_blocks(Loader) ->
 	BootstrapBlock = #block{
 		name={init}, filename="<none>", 
 		start_line=-1, end_line=-1, 
@@ -44,4 +45,4 @@ create_init_and_exit_blocks(Repository) ->
 		start_line=-99, end_line=-99, 
 		body=[]
 	},
-	loader:add_block(BootstrapBlock, loader:add_block(ExitBlock, Repository)).
+	loader:add_block(BootstrapBlock, loader:add_block(ExitBlock, Loader)).

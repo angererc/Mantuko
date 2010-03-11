@@ -4,7 +4,7 @@
 -include("include/values.hrl").
 
 assembler_syntax_test() ->
-	Repository = loader:load_from_string("
+	Loader = loader:load_from_string("
 	othermacro: {}
 	somemacro: {
 		%reg = %reg
@@ -118,10 +118,10 @@ assembler_syntax_test() ->
 		%reg = sched {}(%reg)
 		%reg = sched {}(new struct)
 	}"),
-	true = loader:contains_block({main}, Repository),
-	true = loader:contains_block(othermacro, Repository),
-	true = loader:contains_block(somemacro, Repository),
-	false = loader:contains_block(xxxxx, Repository),
+	true = loader:contains_block({main}, Loader),
+	true = loader:contains_block(othermacro, Loader),
+	true = loader:contains_block(somemacro, Loader),
+	false = loader:contains_block(xxxxx, Loader),
 	ok.
 	
 	
