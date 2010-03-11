@@ -23,5 +23,5 @@ display_string(Level, String, Params) ->
 	global_options:do_if_option_predicate(
 		fun()-> erlang:display(lists:flatten(io_lib:format(String, Params))) end, 
 		trace_verbosity, 
-		fun(OptLevel) -> OptLevel >= Level end, -1					
+		fun(OptLevel) -> OptLevel >= Level end, ?FATAL					
 	).

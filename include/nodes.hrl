@@ -1,0 +1,2 @@
+-record (branch_node, {}).
+-record (option_node, {}).

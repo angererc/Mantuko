@@ -19,7 +19,7 @@ parse(Filename, String) ->
 		{ok, Repository} ->	
 			Repository;
 		{error, Reason} ->
-			events:fatal("Parser error in program parsed from ~80p. Reason: ~80p", [String, Reason]),
+			events:fatal("Parser error in program parsed from ~80p. Reason: ~80p", [Filename, Reason]),
 			{error, Reason}
 	end.
 				

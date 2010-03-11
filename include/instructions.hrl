@@ -37,7 +37,7 @@
 % 	LineNo = integer()
 %	Nth = integer()
 %	Reg = values:reg() | undefined
-%	Block = values:reg() | values:block()
+%	Block = values:reg() | values:block_ref()
 %	Struct = values:reg() | values:new() | values:this().
 % Creates a new activation and schedules it after now(). The new activation can be assigned to a register so
 % that it can be used somewhere else (e.g., stored in a struct); if the activation is not stored in a register,
