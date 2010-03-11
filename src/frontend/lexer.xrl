@@ -44,7 +44,7 @@ sched	: {token,{sched, TokenLine}}.
 
 
 %keywords
--> : {token,{schedule,TokenLine}}.
+-> : {token,{arrow,TokenLine}}.
 
 {IDENTIFIER}  : {token, {ident, TokenLine, TokenChars}}.
 {NUMBER}  : {token, {num, TokenLine, TokenChars}}.

@@ -21,7 +21,7 @@ new struct array lock
 percent sched
 act_block act_struct
 colon
-schedule.
+arrow.
 
 Rootsymbol file.
 
@@ -73,12 +73,12 @@ instruction -> slot equals value
 % NOTE: it doesn't make sense to add a now -> %reg variant
 % because: this only succeeds if there is an edge from now to %reg already 
 % and then the edge would be redundant
-instruction -> slot_or_reg schedule slot_or_reg	
-					: #schedule{line_no=line_no('$2'), lhs='$1', rhs='$3'}.
+instruction -> slot_or_reg arrow slot_or_reg	
+					: #order{line_no=line_no('$2'), lhs='$1', rhs='$3'}.
 instruction -> sched activation_lhs lparen activation_rhs rparen
-					: #activate{line_no=line_no('$1'), nth=inc(nth), reg=undefined, block='$2', struct='$4'}.
+					: #schedule{line_no=line_no('$1'), nth=inc(nth), reg=undefined, block='$2', struct='$4'}.
 instruction -> register equals sched activation_lhs lparen activation_rhs rparen
-					: #activate{line_no=line_no('$2'), nth=inc(nth), reg='$1', block='$4', struct='$6'}.
+					: #schedule{line_no=line_no('$2'), nth=inc(nth), reg='$1', block='$4', struct='$6'}.
 
 %%
 %% PRIMITIVES
