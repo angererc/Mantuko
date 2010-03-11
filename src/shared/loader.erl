@@ -53,11 +53,11 @@ contains_block(BlockID, Repository) ->
 	
 % returns false and logs a fatal error if block does already exist
 % @spec add_block(atom(), code_repository()) -> code_repository() | false
-add_block(#block{id=ID}=B, Repository) ->
-	case contains_block(ID, Repository) of
+add_block(#block{name=Name}=B, Repository) ->
+	case contains_block(Name, Repository) of
 		false -> [B|Repository];
 		true -> 
-			events:fatal("A block with name '~w' already exists", [ID]),
+			events:fatal("A block with name '~w' already exists", [Name]),
 			false
 	end.
 	

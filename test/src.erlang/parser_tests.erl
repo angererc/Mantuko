@@ -19,9 +19,9 @@ assembler_syntax_test() ->
 			;other block
 		}
 		%reg = this
-		%reg = struct
-		%reg = array
-		%reg = lock
+		%reg = new struct
+		%reg = new array
+		%reg = new lock
 		%reg= nil
 		%reg =now
 		%reg=%reg[%reg]
@@ -39,8 +39,8 @@ assembler_syntax_test() ->
 		%reg = this['foo]#block
 		
 		%reg = :somemacro
-		%reg = fork :somemacro(this)
-		%reg = fork :somemacro(struct)
+		%reg = sched :somemacro(this)
+		%reg = sched :somemacro(new struct)
 		
 		;store variant 1
 		%reg[%reg] = %reg['foo]
@@ -50,9 +50,9 @@ assembler_syntax_test() ->
 			;other block
 		}
 		%reg[%reg] = this[42]
-		%reg[%reg] = struct
-		%reg[%reg] = array
-		%reg[%reg] = lock
+		%reg[%reg] = new struct
+		%reg[%reg] = new array
+		%reg[%reg] = new lock
 		%reg[%reg] = nil
 		%reg[%reg] = now
 		
@@ -64,9 +64,9 @@ assembler_syntax_test() ->
 			;other block
 		}
 		%reg[1] = this[%reg]
-		%reg[1] = struct
-		%reg[1] = array
-		%reg[1] = lock
+		%reg[1] = new struct
+		%reg[1] = new array
+		%reg[1] = new lock
 		%reg[1] = nil
 		%reg[1] = now
 		
@@ -78,9 +78,9 @@ assembler_syntax_test() ->
 			;other block
 		}
 		this[%reg] = this
-		this[%reg] = struct
-		this[%reg] = array
-		this[%reg] = lock
+		this[%reg] = new struct
+		this[%reg] = new array
+		this[%reg] = new lock
 		this[%reg] = nil
 		this[%reg] = now
 		
@@ -96,18 +96,18 @@ assembler_syntax_test() ->
 		%reg, %reg = prim(1, 2, 'three, %four)
 		
 		;activations variant 1
-		fork %reg(%reg)
-		fork %reg(struct)
-		fork {}(%reg)
-		fork {}(struct)
-		fork :othermacro(struct)
-		fork this['foo](this['bar])
+		sched %reg(%reg)
+		sched %reg(new struct)
+		sched {}(%reg)
+		sched {}(new struct)
+		sched :othermacro(new struct)
+		sched this['foo](this['bar])
 		
 		;activations variant 2
-		%reg = fork %reg(%reg)
-		%reg = fork %reg(struct)
-		%reg = fork {}(%reg)
-		%reg = fork {}(struct)
+		%reg = sched %reg(%reg)
+		%reg = sched %reg(new struct)
+		%reg = sched {}(%reg)
+		%reg = sched {}(new struct)
 	}"),
 	true = loader:contains_block({main}, Repository),
 	true = loader:contains_block(othermacro, Repository),

@@ -1,7 +1,8 @@
 Nonterminals 
 file
-opt_macro_list macro
-block body
+opt_named_block_list named_block
+body
+literal_block block_ref
 instruction value 
 register symbol number 
 slot slot_or_reg
@@ -16,8 +17,8 @@ tick comma equals
 lparen rparen lcurl rcurl lsquare rsquare
 ident num
 this nil now
-struct array lock
-percent fork
+new struct array lock
+percent sched
 act_block act_struct
 colon
 schedule.
@@ -26,26 +27,35 @@ Rootsymbol file.
 
 %we use {main} as the id for the main block so that the atom main can be used as a macro name
 % the first element in the returned block array will be the main block
-file -> opt_macro_list block opt_macro_list	: 					
-					Repository1 = loader:add_all_blocks('$1', loader:new()),
-					Repository2 = loader:add_all_blocks('$3', Repository1),
-					loader:add_block('$2'#block{id={main}}, Repository2).
+file -> opt_named_block_list literal_block opt_named_block_list	: 	
+			%can't call save_block here because that returns undefined
+			loader:add_block('$2'#block{name={main}}, get(repository)).
 
-opt_macro_list -> '$empty'		: [].
-opt_macro_list -> macro opt_macro_list : ['$1'|'$2'].
+opt_named_block_list -> '$empty'		: undefined.
+opt_named_block_list -> named_block opt_named_block_list : undefined.
 
-macro -> ident colon block : '$3'#block{id=list_to_atom(unwrap('$1'))}. 
+named_block -> ident colon literal_block : 
+			save_block('$3'#block{name=list_to_atom(unwrap('$1'))}). 
 
-block -> lcurl body rcurl	: 
+literal_block -> lcurl body rcurl	: 
 			{_,Start} = '$1',
 			{_, End} = '$3',
+			%reset counters for next block
+			reset(nth),
 			#block{filename=?FILENAME, start_line=Start, end_line=End, body='$2'}.
-			
-block -> lcurl rcurl	: 
+literal_block -> lcurl rcurl	: 
 			{_,Start} = '$1',
 			{_, End} = '$2',
+			%reset counters for next block; probably not needed here but hey...
+			reset(nth),
 			#block{filename=?FILENAME, start_line=Start, end_line=End, body=[]}.
-block -> colon ident : #block_ref{id=list_to_atom(unwrap('$2'))}.
+			
+block_ref -> literal_block :
+	Name = {anonymous, inc(anonymous_blocks)},
+	save_block('$1'#block{name=Name}),
+	#block_ref{nth=inc(nth), name=Name}.	
+block_ref -> colon ident : 
+	#block_ref{nth=inc(nth), name=list_to_atom(unwrap('$2'))}.
 
 body -> instruction					: ['$1'].
 body -> instruction body	: case '$1' of
@@ -65,10 +75,10 @@ instruction -> slot equals value
 % and then the edge would be redundant
 instruction -> slot_or_reg schedule slot_or_reg	
 					: #schedule{line_no=line_no('$2'), lhs='$1', rhs='$3'}.
-instruction -> fork activation_lhs lparen activation_rhs rparen
-					: #activate{line_no=line_no('$1'), reg=undefined, block='$2', struct='$4'}.
-instruction -> register equals fork activation_lhs lparen activation_rhs rparen
-					: #activate{line_no=line_no('$2'), reg='$1', block='$4', struct='$6'}.
+instruction -> sched activation_lhs lparen activation_rhs rparen
+					: #activate{line_no=line_no('$1'), nth=inc(nth), reg=undefined, block='$2', struct='$4'}.
+instruction -> register equals sched activation_lhs lparen activation_rhs rparen
+					: #activate{line_no=line_no('$2'), nth=inc(nth), reg='$1', block='$4', struct='$6'}.
 
 %%
 %% PRIMITIVES
@@ -111,11 +121,11 @@ value -> slot : '$1'.
 value -> register : '$1'.
 value -> symbol : '$1'.
 value -> number : '$1'.
-value -> block : '$1'.
+value -> block_ref : '$1'.
 value -> this : #this{}.
-value -> struct : #struct{}.
-value -> array : #array{}.
-value -> lock : #lock{}.
+value -> new struct : #new_struct{nth=inc(nth)}.
+value -> new array : #new_array{nth=inc(nth)}.
+value -> new lock : #new_lock{nth=inc(nth)}.
 value -> nil : #nil{}.
 value -> now : #now{}.
 value -> activation_value act_block : #act_block{activation='$1'}.
@@ -131,16 +141,16 @@ slot_or_reg -> slot : '$1'.
 slot -> struct_value lsquare slot_value rsquare : #slot{context='$1', slot='$3'}.
 register -> percent ident : #reg{name=list_to_atom(unwrap('$2'))}.
 symbol -> tick ident : #sym{name=list_to_atom(unwrap('$2'))}.
-number -> num : #num{value=nummeric_value_from_string_token('$1')}.
+number -> num : #num{nth=inc(nth), value=nummeric_value_from_string_token('$1')}.
 
 %%
 %% ACTIVATIONS
 %%
 activation_lhs -> slot_or_reg : '$1'.
-activation_lhs -> block : '$1'.
+activation_lhs -> block_ref : '$1'.
 
 activation_rhs -> slot_or_reg : '$1'.
-activation_rhs -> struct : #struct{}.
+activation_rhs -> new struct : #new_struct{nth=inc(nth)}.
 activation_rhs -> this : #this{}.
 
 Erlang code.
@@ -156,6 +166,17 @@ unwrap({_,_,V}) -> V.
 
 line_no({_,LineNo,_}) -> LineNo;
 line_no({_,LineNo}) -> LineNo.
+
+reset(Sym) ->
+	put(Sym, 0).
+	
+inc(Sym) ->
+	put(Sym, get(Sym)+1).
+	
+save_block(Block) ->
+	put(repository, loader:add_block(Block, get(repository))),
+	%return undefined because put returns the old repository without the new block
+	undefined.
 
 nummeric_value_from_string_token({_, _, V}) ->
 	case erl_scan:string(V) of
@@ -175,6 +196,10 @@ nummeric_value_from_string_token({_, _, V}) ->
 % returns a list of blocks; the first block has id {main}
 parse_from_string(Filename, String) ->
 	put(filename, Filename),
+	%global variables
+	reset(nth),
+	reset(anonymous_blocks),
+	put(repository, loader:new()),
 	{ok,Tokens,_} = lexer:string(String),	
 	parse(Tokens).
 	

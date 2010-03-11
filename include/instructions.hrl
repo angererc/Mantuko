@@ -33,8 +33,9 @@
 % Example: <pre>%reg1, %reg2 = somefun 42, 'sym, %reg</pre>
 -record (intrinsic, {line_no, name, out_registers, in_values}). %primitive operations, in_values=[value]
 
-% @type activate(LineNo, Reg, Block, Struct)
+% @type activate(LineNo, Nth, Reg, Block, Struct)
 % 	LineNo = integer()
+%	Nth = integer()
 %	Reg = values:reg() | undefined
 %	Block = values:reg() | values:block()
 %	Struct = values:reg() | values:new() | values:this().
@@ -42,4 +43,4 @@
 % that it can be used somewhere else (e.g., stored in a struct); if the activation is not stored in a register,
 % Target is undefined
 % Example: <pre>%reg = %blockreg(new)</pre>
--record (activate, {line_no, reg, block, struct}). %target=register|undefined, block=register|block, struct=register|new|this
+-record (activate, {line_no, nth, reg, block, struct}). %target=register|undefined, block=register|block, struct=register|new|this
