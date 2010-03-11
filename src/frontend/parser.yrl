@@ -26,17 +26,9 @@ Rootsymbol file.
 %we use {main} as the id for the main block so that the atom main can be used as a macro name
 % the first element in the returned block array will be the main block
 file -> opt_macro_list block opt_macro_list	: 					
-					Blocks = lists:foldl(fun(B, AccIn)->
-						case lists:keysearch(B#block.id, ?BLOCK_ID_POS, AccIn) of
-									false ->	[B|AccIn];
-									_Else -> 
-										tracer:fatal(?MODULE, parse_macros, 
-													"A macro with name '~w' already exists in ~s", 
-													[B#block.id, ?FILENAME])
-								end
-					 end, [], '$1' ++ '$3'),
-					SortedBlocks = lists:keysort(?BLOCK_ID_POS, Blocks),
-					['$2'#block{id={main}} | SortedBlocks].
+					Repository1 = loader:add_all_blocks('$1', loader:new()),
+					Repository2 = loader:add_all_blocks('$3', Repository1),
+					loader:add_block('$2'#block{id={main}}, Repository2).
 
 opt_macro_list -> '$empty'		: [].
 opt_macro_list -> macro opt_macro_list : ['$1'|'$2'].
@@ -152,7 +144,7 @@ Erlang code.
 
 -include("include/instructions.hrl").
 -include("include/values.hrl").
--export([parse_from_string/1, parse_from_file/1]).
+-export([parse_from_string/2]).
 
 %*********************************
 %helpers used in the grammar
@@ -174,33 +166,11 @@ nummeric_value_from_string_token({_, _, V}) ->
 %extended interface for the parser
 %*********************************
 -define(FILENAME, get(filename)).
--define (BLOCK_ID_POS, 2).
 
-% -> [block()]
+% @spec parse_from_string(Filename::string(), Program::string())-> loader:code_repository() | {error, Reason}
 % returns a list of blocks; the first block has id {main}
-parse_from_string(String) ->
-	case get(filename) of
-		undefined -> put(filename, "<parsed from string>");
-		_ -> ok
-	end,
+parse_from_string(Filename, String) ->
+	put(filename, Filename),
 	{ok,Tokens,_} = lexer:string(String),	
-	case parse(Tokens) of
-		{ok, Blocks} ->			
-			put(filename, undefined),
-			Blocks;
-		{error, Reason} ->
-			FN = get(filename),
-			tracer:fatal(?MODULE, parse_from_string, "Parser error in file ~s. Reason: ~80p", [FN, Reason]),			
-			put(filename, undefined),
-			{error, Reason}
-	end.
+	parse(Tokens).
 	
-parse_from_file(FileName) ->
-	put(filename, FileName),
-    case file:read_file(FileName) of
-		{ok, Binary} ->
-    		parse_from_string(erlang:binary_to_list(Binary));
-		{error, Reason} -> 
-			tracer:fatal(?MODULE, parse_from_file, "Parser error, cannot read file ~s. Reason: ~p", [FileName, Reason]),
-			{error, Reason}
-	end.
