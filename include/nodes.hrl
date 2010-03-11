@@ -1,2 +1,3 @@
--record (branch_node, {}).
--record (option_node, {}).
+-record (branch_in_node, {}).
+-record (branch_out_node, {}).
+-record (option_node, {block, this}).

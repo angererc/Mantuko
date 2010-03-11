@@ -2,7 +2,8 @@
 
 -include("include/nodes.hrl").
 
--export ([analyze/1]).
+-export ([analyze/3]).
 
-analyze(_Node) ->
+analyze(#option_node{block=BlockID, this=This}, _InputHeap, Loader) ->
+	Block = loader:get_block(BlockID, Loader),
 	ok.
