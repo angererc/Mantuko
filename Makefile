@@ -1,7 +1,7 @@
 .SUFFIXES: .erl .yrl .xrl .html
 
-LEXERS = src/masm/lexer
-PARSERS= src/masm/parser
+LEXERS = src/frontend/lexer
+PARSERS= src/frontend/parser
 
 DOC_FILES = $(wildcard src/*/*.erl)
 DOCDIR = doc
@@ -34,7 +34,7 @@ comma:= ,
 quotecomma:= $(quote)$(comma)$(quote)
 empty:= 
 space:= $(empty) $(empty)
-docs: $(DOC_FILES)
+doc: $(DOC_FILES)
 	mkdir -p doc
 	erl -noshell -run edoc_run files '["$(subst $(space),$(quotecomma),$(DOC_FILES))"]' '[{dir,"$(DOCDIR)"}]' 
 		
