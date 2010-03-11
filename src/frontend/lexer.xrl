@@ -18,8 +18,10 @@ Rules.
 {WHITESPACE}+  	: skip_token.
 {LINECOMMENT}	: skip_token.
 
+%check registers and symbols first, so that we can allow %array etc
+\%{IDENTIFIER}  : {token, {reg_ident, TokenLine, TokenChars}}.
+\'{IDENTIFIER}  : {token, {sym_ident, TokenLine, TokenChars}}.
 
-\'		: {token,{tick,TokenLine}}.
 \:		: {token,{colon,TokenLine}}.
 \,		: {token,{comma,TokenLine}}.
 \=		: {token,{equals,TokenLine}}.
@@ -29,7 +31,6 @@ Rules.
 \}		: {token,{rcurl,TokenLine}}.
 \[		: {token,{lsquare,TokenLine}}.
 \]		: {token,{rsquare,TokenLine}}.
-\%		: {token,{percent,TokenLine}}. %used for registers
 
 this	: {token,{this,TokenLine}}.
 new		: {token,{new,TokenLine}}.

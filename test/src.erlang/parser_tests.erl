@@ -31,6 +31,15 @@ assembler_syntax_test() ->
 		%reg = this[1]
 		%reg = this['sym]
 		
+		;those should work
+		%array = this['array]
+		%struct = this['struct]
+		%new = this['new]
+		%this = this['this]
+		%block = this['block]
+		%lock = this['lock]
+		%sched = this['sched]
+		
 		%reg = now#block
 		%reg = now#struct
 		%reg = %reg#block

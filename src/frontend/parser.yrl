@@ -13,12 +13,13 @@ activation_lhs activation_rhs
 activation_value.
 
 Terminals
-tick comma equals
+comma equals
 lparen rparen lcurl rcurl lsquare rsquare
+reg_ident sym_ident
 ident num
 this nil now
 new struct array lock
-percent sched
+sched
 act_block act_struct
 colon
 arrow.
@@ -139,8 +140,8 @@ slot_or_reg -> register : '$1'.
 slot_or_reg -> slot : '$1'.
 
 slot -> struct_value lsquare slot_value rsquare : #slot{context='$1', slot='$3'}.
-register -> percent ident : #reg{name=list_to_atom(unwrap('$2'))}.
-symbol -> tick ident : #sym{nth=inc(nth), name=list_to_atom(unwrap('$2'))}.
+register -> reg_ident : #reg{name=list_to_atom(lists:nthtail(1,unwrap('$1')))}.
+symbol -> sym_ident : #sym{nth=inc(nth), name=list_to_atom(lists:nthtail(1, unwrap('$1')))}.
 number -> num : #num{nth=inc(nth), value=nummeric_value_from_string_token('$1')}.
 
 %%
