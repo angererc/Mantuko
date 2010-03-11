@@ -14,8 +14,8 @@
 % * trace_level defines which entries will be kept
 % FATAL = 1, SEVERE = 2, WARNING = 3, TRACE = 5, TRACE_VERBOSE = 5, LOG = 6, DEBUG = 7
 
-set_global_options(Options) when is_list(Options) ->
-	lazy_ets:insert(global_options, Options).
+set_global_options(OptionOrOptions) ->
+	lazy_ets:insert(global_options, OptionOrOptions).
 	
 tear_down_global_options() ->
 	lazy_ets:delete(global_options).
