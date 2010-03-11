@@ -140,7 +140,7 @@ slot_or_reg -> slot : '$1'.
 
 slot -> struct_value lsquare slot_value rsquare : #slot{context='$1', slot='$3'}.
 register -> percent ident : #reg{name=list_to_atom(unwrap('$2'))}.
-symbol -> tick ident : #sym{name=list_to_atom(unwrap('$2'))}.
+symbol -> tick ident : #sym{nth=inc(nth), name=list_to_atom(unwrap('$2'))}.
 number -> num : #num{nth=inc(nth), value=nummeric_value_from_string_token('$1')}.
 
 %%
