@@ -4,4 +4,5 @@
 
 all_test_() ->
   [
+	{module, parser_tests}
   ].
