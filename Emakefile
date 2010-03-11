@@ -15,17 +15,17 @@
 ]}.
 
 % Compile the test files
-{ './test/src/*', [ debug_info, {pa,".."},
+{ './test/src.erlang/*', [ debug_info, {pa,".."},
 	{ i, "./include" },
 	{ outdir, "./test/ebin" }
 ]}.
 
-{ './test/src/*/*', [ debug_info, {pa,".."},
+{ './test/src.erlang/*/*', [ debug_info, {pa,".."},
 	{ i, "./include" },
 	{ outdir, "./test/ebin" }
 ]}.
 
-{ './test/src/*/*/*', [ debug_info, {pa,".."},
+{ './test/src.erlang/*/*/*', [ debug_info, {pa,".."},
 	{ i, "./include" },
 	{ outdir, "./test/ebin" }
 ]}.
