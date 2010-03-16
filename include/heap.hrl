@@ -1,4 +1,10 @@
 
+-record (struct, {}).
+
+-record (array, {}).
+
+-record (lock, {}).
+
 % @type branch_in_node(ActivationOptions)
 % 	ActivationOptions = set(values:activation_option()).
 -record (branch_in_node, {activation_options}).

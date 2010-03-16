@@ -16,27 +16,26 @@
 % a value that creates a new entity for the analysis such as constants and new statements
 % all those values have a block-local id (called nth) to distinguish them syntactically
 
+% @type new_statement() = new_struct() | new_array() | new_lock().
+
 % *****************************
 % runtime values
 % *****************************
 
-% @type loc(Activation, Index)
+% @type loc(CreationStatement, Activation, Index)
 % 	Activation = act()
-%	Index = integer().
+%	CreationStatement = creation_statement().
 % A location plays the role of a memory address for structs. Locations are
 % created during analysis and not by the parser.
 % @see struct
--record (loc, {nth, activation_ref}). %struct location
+-record (loc, {creation_statement, activation_ref}). %struct location
 
 % @type activation_ref(PathCompontents)
-% 	PathCompontents = list(integer()|refs:activation_option()).
+% 	PathCompontents = list(new_statement()|refs:activation_option()).
 % An identifier for an activation that is being analyzed.
 % the path is a path in the creation tree starting from the root; (the root is the last element in the array)
 % each component is either an option or an nth index telling you where to go in the creation tree
 % to reach the node;
-% e.g., {node_id, [2, {option, {blockRef, Foo}, {loc, XYZ}}], 1} means, that starting from root
-% you follow the first option (root only has one) which leads you to a branch node; there you go to option
-% Foo::XYZ and from there you go to the activation that has been created second in Foo
 -record (activation_ref, {path_components}).
 
 % *****************************

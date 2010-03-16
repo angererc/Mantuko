@@ -2,7 +2,7 @@
 
 -include("include/values.hrl").
 -include("include/instructions.hrl").
--include("include/nodes.hrl").
+-include("include/heap.hrl").
 
 -export ([analyze_file/2, analyze_string/2]).
 
@@ -20,7 +20,7 @@ analyze(Loader, Options) ->
 	
 	%create some IDs
 	RootNodeRef = refs:root_activation_ref(),
-	ThisLoc = refs:loc(1, RootNodeRef),
+	ThisLoc = refs:struct_loc(1, RootNodeRef),
 		
 	%create a root branch node with the main block as the only option
 	RootNode = branch_in_node:add_option(
@@ -32,7 +32,7 @@ analyze(Loader, Options) ->
 	Heap1 = heap:new_struct(ThisLoc, heap:new()),
 	Heap2 = heap:new_node(RootNodeRef, RootNode, Heap1),
 	
-	events:log("analysis comes ~w", [here]).
+	node:analyze(RootNodeRef, [], Heap2, Loader2).
 	
 
 	
