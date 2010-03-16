@@ -26,12 +26,18 @@
 % A location plays the role of a memory address for structs. Locations are
 % created during analysis and not by the parser.
 % @see struct
--record (loc, {activation, index=-1}). %struct location
+-record (loc, {nth, activation_ref}). %struct location
 
-% @type activation(Id)
-% 	Id = integer().
+% @type activation_ref(PathCompontents)
+% 	PathCompontents = list(integer()|refs:activation_option()).
 % An identifier for an activation that is being analyzed.
--record (activation, {id}). %activation id
+% the path is a path in the creation tree starting from the root; (the root is the last element in the array)
+% each component is either an option or an nth index telling you where to go in the creation tree
+% to reach the node;
+% e.g., {node_id, [2, {option, {blockRef, Foo}, {loc, XYZ}}], 1} means, that starting from root
+% you follow the first option (root only has one) which leads you to a branch node; there you go to option
+% Foo::XYZ and from there you go to the activation that has been created second in Foo
+-record (activation_ref, {path_components}).
 
 % *****************************
 % abstract values
@@ -48,11 +54,11 @@
 % A placeholder for some value of a known type.
 -record (some, {type}).
 
-% @type option(Type, ValueSet)
+% @type one_of(Type, ValueSet)
 %	Type = value_type()
 %	ValueSet = set(value()).
 % A set of concrete values of the given type.
--record (option, {type, value_set}).
+-record (one_of, {type, value_set}).
 
 % *****************************
 % immediate values
@@ -70,8 +76,8 @@
 % Example: <pre>42</pre>
 -record (num, {nth, value}).
 
-% @type block(ID, Filename, StartLine, EndLine, Body)
-%	ID = atom()
+% @type block(Name, Filename, StartLine, EndLine, Body)
+%	Name = atom()
 %	Filename = string()
 %	StartLine = integer()
 %	EndLine = integer()
@@ -81,9 +87,10 @@
 % Example: <pre>{ *blockbody* }</pre>
 -record (block, {name, filename, start_line, end_line, body}).
 
-% @type block_ref(ID)
-% ID = atom().
-% A reference to another block; used as "macros"
+% @type block_ref(Nth, Name)
+% 	Nth = integer(),
+%	Name = atom().
+% A reference to another block;
 -record (block_ref, {nth, name}).
 
 

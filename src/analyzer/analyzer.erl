@@ -18,10 +18,19 @@ analyze(Loader, Options) ->
 	global_options:set(Options),
 	Loader2 = create_init_and_exit_blocks(Loader),
 	
-	%create an option node here and start analyzing it
-	InitialHeap = someheap,
-	InitialNode = #option_node{block={init}, this=noidea},
-	node:analyze(InitialNode, InitialHeap, Loader2),
+	%create some IDs
+	RootNodeRef = refs:root_activation_ref(),
+	ThisLoc = refs:loc(1, RootNodeRef),
+		
+	%create a root branch node with the main block as the only option
+	RootNode = branch_in_node:add_option(
+						#block_ref{nth=2, name={main}}, 
+						ThisLoc, 
+						branch_in_node:new()),
+	
+	%create a heap
+	Heap1 = heap:new_struct(ThisLoc, heap:new()),
+	Heap2 = heap:new_node(RootNodeRef, RootNode, Heap1),
 	
 	events:log("analysis comes ~w", [here]).
 	
@@ -30,19 +39,9 @@ analyze(Loader, Options) ->
 % *********************
 % *********************
 create_init_and_exit_blocks(Loader) ->
-	BootstrapBlock = #block{
-		name={init}, filename="<none>", 
-		start_line=-1, end_line=-1, 
-		body=[#schedule{
-				line_no=-1, 
-				reg=undefined, 
-				block=#block_ref{nth=0, name={main}}, 
-				struct=#this{}
-		}]
-	},
 	ExitBlock = #block{
 		name={exit}, filename="<none>", 
 		start_line=-99, end_line=-99, 
 		body=[]
 	},
-	loader:add_block(BootstrapBlock, loader:add_block(ExitBlock, Loader)).
+	loader:add_block(ExitBlock, Loader).
