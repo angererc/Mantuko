@@ -16,7 +16,6 @@ analyze({error, Reason}, _Options) ->
 	events:fatal("load error: ~p", [Reason]);
 analyze(Loader, Options) ->
 	global_options:set(Options),
-	Loader2 = create_init_and_exit_blocks(Loader),
 	
 	%create some IDs
 	RootNodeRef = refs:root_activation_ref(),
@@ -32,16 +31,5 @@ analyze(Loader, Options) ->
 	Heap1 = heap:new_struct(ThisLoc, heap:new()),
 	Heap2 = heap:new_node(RootNodeRef, RootNode, Heap1),
 	
-	node:analyze(RootNodeRef, [], Heap2, Loader2).
+	node:analyze(RootNodeRef, [], Heap2, Loader).
 	
-
-	
-% *********************
-% *********************
-create_init_and_exit_blocks(Loader) ->
-	ExitBlock = #block{
-		name={exit}, filename="<none>", 
-		start_line=-99, end_line=-99, 
-		body=[]
-	},
-	loader:add_block(ExitBlock, Loader).
