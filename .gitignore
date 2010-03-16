@@ -1,0 +1,7 @@
+.DS_Store
+erl_crash.dump
+ebin/
+doc/
+*.out/
+src/frontend/parser.erl
+src/frontend/lexer.erl
