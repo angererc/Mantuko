@@ -4,7 +4,7 @@
 
 -export ([new/0, new_node/3]).
 -export ([new_edge/3, new_creation_edge/3]).
--export ([get/2]).
+-export ([get/2, set/3]).
 
 % the schedule is part of the heap, so don't use it directly but only through heap functions
 new() ->
@@ -32,3 +32,6 @@ get(ActivationRef, Sched) ->
 		{ok, Value} ->
 			Value
 	end.
+	
+set(ActivationRef, Node, Sched) ->
+	dict:store(ActivationRef, Node, Sched).

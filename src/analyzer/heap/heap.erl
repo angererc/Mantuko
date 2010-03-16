@@ -5,7 +5,8 @@
 
 -export ([new/0, new_struct/2, new_array/2, new_lock/2, new_node/3]).
 -export ([new_edge/3, new_creation_edge/3]).
--export ([get/2]).
+-export ([get/2, set/3]).
+-export ([is_schedulable/2, compute_incoming_heap/2]).
 
 -record (heap, {mem=dict:new(), sched=sched:new()}).
 
@@ -43,3 +44,14 @@ get(#loc{}=Loc, #heap{mem=Mem}) ->
 	end;
 get(#activation_ref{}=Ref, #heap{sched=Sched}) ->
 	sched:get(Ref, Sched).
+	
+set(#loc{}=Ref, Obj, #heap{mem=Mem}=Heap) ->
+	Heap#heap{mem=dict:store(Ref, Obj, Mem)};
+set(#activation_ref{}=Ref, Node, #heap{sched=Sched}=Heap) ->
+	Heap#heap{sched=sched:set(Ref, Node, Sched)}.
+	
+is_schedulable(_Ref, _Heap) ->
+	false.
+	
+compute_incoming_heap(_Ref, Heap) ->
+	Heap.
