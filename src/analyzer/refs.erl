@@ -19,7 +19,7 @@ root_activation_ref() ->
 %the global exit node is the branch out from our initial branch
 exit_activation_ref() ->
 	#activation_ref{path_components=[branch_out_node()]}.
-	
+		
 %Component is either a values:creation_statement() or a branch_out_path() or an activation_option()
 activation_ref(Component, #activation_ref{path_components=PCs}=Ref) ->
 	ok = case Component of

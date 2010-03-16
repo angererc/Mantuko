@@ -4,6 +4,7 @@
 -include("include/heap.hrl").
 
 -export ([new/0, new_struct/2, new_array/2, new_lock/2, new_node/3]).
+-export ([new_edge/3, new_creation_edge/3]).
 -export ([get/2]).
 
 -record (heap, {mem=dict:new(), sched=sched:new()}).
@@ -25,6 +26,12 @@ new_lock(Loc, #heap{mem=Mem}=Heap) ->
 	
 new_node(ActivationRef, Node, #heap{sched=Sched}=Heap) ->
 	Heap#heap{sched=sched:new_node(ActivationRef, Node, Sched)}.
+	
+new_edge(SourceActivationRef, TargetActivationRef, #heap{sched=Sched}=Heap) ->
+	Heap#heap{sched=sched:new_edge(SourceActivationRef, TargetActivationRef, Sched)}.
+	
+new_creation_edge(SourceActivationRef, TargetActivationRef, #heap{sched=Sched}=Heap) ->
+	Heap#heap{sched=sched:new_creation_edge(SourceActivationRef, TargetActivationRef, Sched)}.
 	
 get(#loc{}=Loc, #heap{mem=Mem}) ->
 	case dict:find(Loc, Mem) of
