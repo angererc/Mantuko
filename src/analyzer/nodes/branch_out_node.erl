@@ -2,6 +2,7 @@
 
 -include("include/debug.hrl").
 -include("include/heap.hrl").
+-include("include/nodes.hrl").
 
 -export ([new/0, analyze/6]).
 

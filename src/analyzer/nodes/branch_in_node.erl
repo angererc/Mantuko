@@ -2,6 +2,7 @@
 
 -include("include/debug.hrl").
 -include("include/heap.hrl").
+-include("include/nodes.hrl").
 
 -export ([new/0, create_branch_out_node/2, add_option/3, analyze/6]).
 
@@ -21,9 +22,9 @@ add_option(BlockRef, ThisLoc, #branch_in_node{activation_options=AOs}=Node) ->
 							refs:activation_option(BlockRef, ThisLoc),
 							AOs)}.
 	
-analyze(ActivationRef, #branch_in_node{activation_options=AOs}=Node, Parents, Heap, Sched, Loader) ->
+analyze(ActivationRef, #branch_in_node{activation_options=AOs}, Parents, Heap, Sched, Loader) ->
 	%store the incoming heap
-	Sched2 = sched:set_node(ActivationRef, Node#branch_in_node{result_heap=Heap}, Sched),
+	Sched2 = sched:set_result(ActivationRef, Heap, Sched),
 	case check_for_loop(AOs, Parents, Sched) of
 		{true, _Parent} ->
 			loop_found;
