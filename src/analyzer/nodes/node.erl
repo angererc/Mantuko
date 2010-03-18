@@ -3,16 +3,16 @@
 -include("include/debug.hrl").
 -include("include/heap.hrl").
 
--export ([analyze/4]).
+-export ([analyze/5]).
 
 % faking some virtual method call and inheritance here
-analyze(ActivationRef, Parents, Heap, Loader) ->
-	case heap:get(ActivationRef, Heap) of
+analyze(ActivationRef, Parents, Heap, Sched, Loader) ->
+	case sched:get_node(ActivationRef, Sched) of
 		#branch_in_node{}=Node ->
-			branch_in_node:analyze(ActivationRef, Node, Parents, Heap, Loader);
+			branch_in_node:analyze(ActivationRef, Node, Parents, Heap, Sched, Loader);
 		#branch_out_node{}=Node ->
-			branch_out_node:analyze(ActivationRef, Node, Parents, Heap, Loader);
+			branch_out_node:analyze(ActivationRef, Node, Parents, Heap, Sched, Loader);
 		#option_node{}=Node ->
-			option_node:analyze(ActivationRef, Node, Parents, Heap, Loader)
+			option_node:analyze(ActivationRef, Node, Parents, Heap, Sched, Loader)
 	end.
 	

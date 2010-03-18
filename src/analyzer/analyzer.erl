@@ -28,9 +28,11 @@ analyze(Loader, Options) ->
 						ThisLoc, 
 						branch_in_node:new()),
 	
-	%create a heap
-	Heap1 = heap:new_struct(ThisLoc, heap:new()),
-	Heap2 = heap:new_node(RootNodeRef, RootNode, Heap1),
+	%create a schedule and heap
+	Sched = sched:set_node(RootNodeRef, RootNode, sched:new()),
+	Sched2 = branch_in_node:create_branch_out_node(RootNodeRef, Sched),
 	
-	node:analyze(RootNodeRef, [], Heap2, Loader).
+	Heap = heap:new_struct(ThisLoc, heap:new()),
+	
+	node:analyze(RootNodeRef, [], Heap, Sched2, Loader).
 	
