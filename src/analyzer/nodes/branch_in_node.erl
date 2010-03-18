@@ -59,7 +59,7 @@ analyze_children(ActivationRef, [ChildActivationRef|Rest], Leftovers, Parents, H
 	case sched:is_schedulable(ChildActivationRef, Sched) of
 		true ->
 			ChildHeap = heap:compute_incoming_heap(ChildActivationRef, Heap),
-			ChildLeftovers = node:analyze(ChildActivationRef, Parents, ChildHeap, Loader),
+			ChildLeftovers = node:analyze(ChildActivationRef, Parents, ChildHeap, Sched, Loader),
 			analyze_children(ActivationRef, Rest ++ ChildLeftovers, Leftovers, Parents, Heap, Sched, Loader);
 		false ->
 			analyze_children(ActivationRef, Rest, [ChildActivationRef, Leftovers], Parents, Heap, Sched, Loader)

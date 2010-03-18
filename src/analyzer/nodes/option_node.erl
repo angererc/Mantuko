@@ -11,4 +11,4 @@ new(ActivationOption) ->
 	
 analyze(_ActivationRef, #option_node{activation_option=Option}, _Parents, _Heap, _Sched, Loader) ->
 	_Block = loader:get_block(refs:activation_option_block_ref(Option), Loader),
-	ok.
+	[].
