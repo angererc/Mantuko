@@ -84,10 +84,10 @@ trace_loop([_S1,_S2,_S3,_S4|Rest]=Indent) ->
 			From ! {?MODULE, Indent},
 			trace_loop(Indent);
 		{trace, _, call, {M, F, Args}} ->
-			debug:log_no_indent(Indent ++ "Call: ~p:~p/~p(~s)", [M, F, length(Args), args_to_string(Args)]),
+			debug:log_no_indent(Indent ++ "Call: \e[1;31m~p:~p/~p\e[0;33m(~s)\e[30m", [M, F, length(Args), args_to_string(Args)]),
 			trace_loop("    "++Indent);
 		{trace, _, return_from, {M, F, Arity}, Ret} ->
-			debug:log_no_indent(Rest ++ "Return: ~p:~p/~p => ~s", [M, F, Arity, val_to_string(1, Ret)]),
+			debug:log_no_indent(Rest ++ "Return: \e[31m~p:~p/~p \e[33m=> ~s\e[30m", [M, F, Arity, val_to_string(1, Ret)]),
 			trace_loop(Rest);
 		Other ->
 			debug:log_no_indent(Indent ++ "Other = ~p", [Other]),

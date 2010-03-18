@@ -40,7 +40,7 @@ debug(String, Params) ->
 	
 display_string(Level, String, Params) ->
 	global_options:do_if_option_predicate(
-		fun()-> erlang:display(lists:flatten(io_lib:format(String, Params))) end, 
+		fun()-> io:format(user, "~s~n", [lists:flatten(io_lib:format(String, Params))]) end, 
 		trace_verbosity, 
 		fun(OptLevel) -> OptLevel >= Level end, ?FATAL					
 	).
