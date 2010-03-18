@@ -14,9 +14,10 @@ analyze_string(String, Options) ->
 	analyze(loader:load_from_string(String), Options).
 	
 analyze({error, Reason}, _Options) ->
-	events:fatal("load error: ~p", [Reason]);
+	debug:fatal("load error: ~p", [Reason]);
 analyze(Loader, Options) ->
 	global_options:set(Options),
+	debug:setup_tracing(),
 	%create some IDs
 	RootNodeRef = refs:root_activation_ref(),
 	ThisLoc = refs:struct_loc(1, RootNodeRef),

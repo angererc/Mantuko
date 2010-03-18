@@ -39,7 +39,7 @@ get(#loc{}=Loc, #heap{mem=Mem}) ->
 		{ok, Value} ->
 			Value;
 		error ->
-			events:fatal("didn't find object for location ~w", [Loc]),
+			debug:fatal("didn't find object for location ~w", [Loc]),
 			error
 	end;
 get(#activation_ref{}=Ref, #heap{sched=Sched}) ->

@@ -19,7 +19,7 @@ parse(Filename, String) ->
 		{ok, Loader} ->	
 			Loader;
 		{error, Reason} ->
-			events:fatal("Parser error in program parsed from ~80p. Reason: ~80p", [Filename, Reason]),
+			debug:fatal("Parser error in program parsed from ~80p. Reason: ~80p", [Filename, Reason]),
 			{error, Reason}
 	end.
 				
@@ -33,7 +33,7 @@ load_from_file(Filename) ->
 		{ok, Binary} ->
     		parse(Filename, erlang:binary_to_list(Binary));
 		{error, Reason} -> 
-			events:fatal("Cannot load file ~s. Reason: ~p", [Filename, Reason]),
+			debug:fatal("Cannot load file ~s. Reason: ~p", [Filename, Reason]),
 			{error, Reason}
 	end.
 	
@@ -57,7 +57,7 @@ add_block(#block{name=Name}=B, Loader) ->
 	case contains_block(Name, Loader) of
 		false -> [B|Loader];
 		true -> 
-			events:fatal("A block with name '~w' already exists", [Name]),
+			debug:fatal("A block with name '~w' already exists", [Name]),
 			false
 	end.
 	

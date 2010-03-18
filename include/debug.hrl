@@ -1,17 +1,8 @@
 % f as in format
--define (f (Format, Params), (begin
-	T = lists:flatten(io_lib:format("~p ~p: ~s", [?MODULE, ?LINE, io_lib:format(Format, Params)])),
-	erlang:display(T)
-end)).
+-define (f (Format, Params), debug:log(Format, Params)).
 
 % p as in print
--define (p (String), (begin
-	T = lists:flatten(io_lib:format("~p ~p: ~s", [?MODULE, ?LINE, String])),
-	erlang:display(T)
-end)).
+-define (p (String), debug:log(String, [])).
 
 % i as in info
--define (i, (begin
-	T = lists:flatten(io_lib:format("~p ~p", [?MODULE, ?LINE])),
-	erlang:display(T)
-end)).
+-define (i, debug:log("~p ~p", [?MODULE, ?LINE])).
