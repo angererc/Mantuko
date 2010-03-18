@@ -1,7 +1,5 @@
 -module (debug).
 
--include_lib("stdlib/include/ms_transform.hrl").
-
 -export ([setup_tracing/0, fatal/2, warning/2, log/2, debug/2]).
 
 -define (FATAL, 1).
@@ -14,19 +12,8 @@ setup_tracing() ->
 		undefined ->
 			ok;
 		MFAs ->
-			dbg:tracer(),
-			lists:foreach(fun setup_tracing/1, MFAs),
-			dbg:p(all,[c])
+			tracer:start(MFAs)
 	end.
-	
-setup_tracing({Module, Function, Arity}) ->
-	dbg:tpl(Module, Function, Arity, dbg:fun2ms(fun(_) -> return_trace() end));
-setup_tracing({Module, Function}) ->
-	dbg:tpl(Module, Function, dbg:fun2ms(fun(_) -> return_trace() end));
-setup_tracing({Module}) ->
-	dbg:tpl(Module, dbg:fun2ms(fun(_) -> return_trace() end));
-setup_tracing(Module) when is_atom(Module) ->
-	dbg:tpl(Module, dbg:fun2ms(fun(_) -> return_trace() end)).
 	
 fatal(String, Params) ->
 	display_string(?FATAL, String, Params).

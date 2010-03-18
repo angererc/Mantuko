@@ -1,5 +1,6 @@
 -module (node).
 
+-include("include/debug.hrl").
 -include("include/heap.hrl").
 
 -export ([analyze/4]).
