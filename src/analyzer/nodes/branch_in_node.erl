@@ -18,6 +18,7 @@ add_option(BlockRef, ThisLoc, #branch_in_node{activation_options=AOs}=Node) ->
 							AOs)}.
 	
 analyze(ActivationRef, #branch_in_node{activation_options=AOs}=Node, Parents, Heap, Loader) ->
+	debug:log("XXXXX", []),
 	case check_for_loop(AOs, Parents, Heap) of
 		{true, _Parent} ->
 			loop_found;

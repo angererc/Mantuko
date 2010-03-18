@@ -2,24 +2,33 @@
 
 -include("include/debug.hrl").
 
--export ([start/1]).
+-export ([is_started/0, start/1, indentation/0]).
 
+is_started() ->
+	case whereis(?MODULE) of
+		undefined -> false;
+		_Else -> true
+	end.
+	
 start([]) ->
 	ok;
 start(MFAs) ->
 	Caller = self(),
-	spawn(fun()->
+	register(?MODULE, spawn(fun()->
 		lists:foreach(fun(MFA)->
 			add_trace(MFA)
 		end, MFAs),
 		erlang:trace(Caller, true, [call, procs]),
 		Caller ! {self(), started},
-		trace_loop()
-	end),
+		trace_loop("    ")
+	end)),
 	receive
 		{_TracerProcess, started} ->
 			ok
 	end.
+	
+indentation() ->
+	utils:rpc(?MODULE, indentation).
 	
 add_trace({M, _F, _A}=MFA) ->
 	%force loading of module!
@@ -36,14 +45,51 @@ add_trace({M}) ->
 add_trace(M) ->
 	add_trace({M, '_', '_'}).
 		
-trace_loop() ->
+args_to_string([]) ->
+	"";
+args_to_string([Arg]) ->
+	val_to_string(1, Arg);
+args_to_string([Arg|Rest]) ->
+	val_to_string(1, Arg) ++ ", " ++ args_to_string(Rest).
+	
+val_to_string(Depth, V) when Depth > 2, is_list(V) ->
+	io_lib:format("[...]", []);
+val_to_string(Depth, V) when Depth > 2, is_tuple(V) ->
+	io_lib:format("{...}", []);
+val_to_string(_Depth, []) ->
+	"[]";
+val_to_string(Depth, [One]) ->
+	io_lib:format("[~s]", [val_to_string(Depth+1, One)]);
+val_to_string(Depth, [One, Two]) ->
+	io_lib:format("[~s, ~s]", [val_to_string(Depth+1, One), val_to_string(Depth+1, Two)]);
+val_to_string(Depth, [One, Two, Three]) ->
+	io_lib:format("[~s, ~s, ~s]", [val_to_string(Depth+1, One), val_to_string(Depth+1, Two), val_to_string(Depth+1, Three)]);
+val_to_string(Depth, [One, Two|Rest]) ->
+	io_lib:format("[~s, ~s, <+~p>]", [val_to_string(Depth+1, One), val_to_string(Depth+1, Two), length(Rest)]);
+val_to_string(Depth, {One}) ->
+	io_lib:format("{~s}", [val_to_string(Depth+1, One)]);
+val_to_string(Depth, {One, Two}) ->
+	io_lib:format("{~s, ~s}", [val_to_string(Depth+1, One), val_to_string(Depth+1, Two)]);
+val_to_string(Depth, {One, Two, Three}) ->
+	io_lib:format("{~s, ~s, ~s}", [val_to_string(Depth+1, One), val_to_string(Depth+1, Two), val_to_string(Depth+1, Three)]);
+val_to_string(Depth, A) when is_tuple(A) ->
+	[F|R] = tuple_to_list(A),
+	io_lib:format("{~s, <+~p>}", [val_to_string(Depth+1, F), length(R)]);
+val_to_string(_Depth, A) ->
+	io_lib:format("~p", [A]).
+	
+trace_loop([_S1,_S2,_S3,_S4|Rest]=Indent) ->
 	receive
-		{trace, _, call, {M, F, _Args}} ->
-			debug:log("Call: ~p:~p", [M, F]),
-			trace_loop();
-		{trace, _, return_from, Call, _Ret} ->
-			debug:log("Return From: ~p", [Call]);
+		{From, indentation} ->
+			From ! {?MODULE, Indent},
+			trace_loop(Indent);
+		{trace, _, call, {M, F, Args}} ->
+			debug:log_no_indent(Indent ++ "Call: ~p:~p/~p(~s)", [M, F, length(Args), args_to_string(Args)]),
+			trace_loop("    "++Indent);
+		{trace, _, return_from, {M, F, Arity}, Ret} ->
+			debug:log_no_indent(Rest ++ "Return: ~p:~p/~p => ~s", [M, F, Arity, val_to_string(1, Ret)]),
+			trace_loop(Rest);
 		Other ->
-			debug:log("Other = ~p", [Other]),
-			trace_loop()
+			debug:log_no_indent(Indent ++ "Other = ~p", [Other]),
+			trace_loop(Indent)
 	end.
