@@ -5,5 +5,5 @@
 -record (branch_out_node, {}).
 
 % @type option_node(ActivationOption)
-%	ActivationOption = values:activation_option().
+%	ActivationOption = refs:activation_option().
 -record (option_node, {activation_option}).

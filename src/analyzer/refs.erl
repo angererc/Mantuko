@@ -5,7 +5,7 @@
 -export ([root_activation_ref/0, exit_activation_ref/0, activation_ref/2]).
 -export ([activation_option/2, block_ref/2]).
 -export ([struct_loc/2, array_loc/2, lock_loc/2]).
--export ([activation_option_block_ref/1, activation_option_this_loc/1]).
+-export ([blocks_from_activation_options/1, activation_option_block_ref/1, activation_option_this_loc/1]).
 -export ([branch_out_node/0]).
 
 % @type activation_option(BlockRef, ThisLoc)
@@ -33,6 +33,9 @@ activation_ref(Component, #activation_ref{path_components=PCs}=Ref) ->
 	
 activation_option(BlockRef, ThisLoc) ->
 	#activation_option{block_ref=BlockRef, this_loc=ThisLoc}.
+
+blocks_from_activation_options(Options) ->
+	lists:foldl(fun(Option, Set)-> sets:add_element(Option#activation_option.block_ref, Set) end, sets:new(), Options).
 	
 activation_option_block_ref(#activation_option{block_ref=Ref}) ->
 	Ref.

@@ -65,14 +65,16 @@ analyze_children(ActivationRef, [ChildActivationRef|Rest], Leftovers, Parents, H
 			analyze_children(ActivationRef, Rest, [ChildActivationRef, Leftovers], Parents, Heap, Sched, Loader)
 	end.
 
+
+
 check_for_loop(_MyActivationOptions, [], _Sched) ->
 	false;
-check_for_loop(MyActivationOptions, [Parent|Rest], Sched) ->
-	% that's wrong; we have to check if there is any option with the same block, the
-	% this pointer is not relevant
+check_for_loop(MyActivationOptions, [Parent|Grandpa], Sched) ->
 	#branch_in_node{activation_options=ParentActivationOptions} = sched:get_node(Parent, Sched),
-	case sets:size(sets:intersection(MyActivationOptions, ParentActivationOptions)) of
-		0 -> check_for_loop(MyActivationOptions, Rest, Sched);
+	MyActivationBlocks = refs:blocks_from_activation_options(MyActivationOptions),
+	ParentActivationBlocks = refs:blocks_from_activation_options(ParentActivationOptions),
+	case sets:size(sets:intersection(MyActivationBlocks, ParentActivationBlocks)) of
+		0 -> check_for_loop(MyActivationOptions, Grandpa, Sched);
 		_Else -> {true, Parent}
 	end.
 	
