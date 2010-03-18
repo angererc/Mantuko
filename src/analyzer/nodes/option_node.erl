@@ -1,5 +1,6 @@
 -module (option_node).
 
+-include("include/debug.hrl").
 -include("include/heap.hrl").
 
 -export ([new/1, analyze/5]).

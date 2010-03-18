@@ -1,5 +1,6 @@
 -module (branch_in_node).
 
+-include("include/debug.hrl").
 -include("include/heap.hrl").
 
 -export ([new/0, add_option/3, analyze/5]).
@@ -21,12 +22,12 @@ analyze(ActivationRef, #branch_in_node{activation_options=AOs}=Node, Parents, He
 		{true, _Parent} ->
 			loop_found;
 		false ->
-			{Heap2, NewNodes} = prepare_analysis(ActivationRef, AOs, Heap),
+			{Heap2, NewNodes} = create_nodes(ActivationRef, AOs, Heap),
 			Heap3 = heap:set(ActivationRef, Node#branch_in_node{result_heap=Heap2}, Heap2),
 			analyze_children(ActivationRef, NewNodes, [], [ActivationRef|Parents], Heap3, Loader)
 	end.
 
-prepare_analysis(ActivationRef, ActivationOptions, Heap)	->
+create_nodes(ActivationRef, ActivationOptions, Heap)	->
 	sets:fold( %create a node for each option and add the edges
 		fun(Option, {HeapAcc, NewNodes})-> 
 			NewActivationRef = refs:activation_ref(Option, ActivationRef),
@@ -62,6 +63,8 @@ analyze_children(ActivationRef, [ChildActivationRef|Rest], Leftovers, Parents, H
 check_for_loop(_MyActivationOptions, [], _Heap) ->
 	false;
 check_for_loop(MyActivationOptions, [Parent|Rest], Heap) ->
+	% that's wrong; we have to check if there is any option with the same block, the
+	% this pointer is not relevant
 	#branch_in_node{activation_options=ParentActivationOptions} = heap:get(Parent, Heap),
 	case sets:size(sets:intersection(MyActivationOptions, ParentActivationOptions)) of
 		0 -> check_for_loop(MyActivationOptions, Rest, Heap);

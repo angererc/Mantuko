@@ -1,5 +1,6 @@
 -module (branch_out_node).
 
+-include("include/debug.hrl").
 -include("include/heap.hrl").
 
 -export ([new/0, analyze/5]).
