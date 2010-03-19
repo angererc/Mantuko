@@ -63,8 +63,11 @@ analyze_open_nodes(Parents, Heap, Sched, Loader) ->
 	%we ran out of schedulable nodes
 	case sched:get_schedulable_nodes(Sched) of
 		[] -> 
+			Open = sched:get_open_nodes(Sched),
+			?f("finished analyzing open nodes; ~w are still open: ~w", [length(Open), Open]),
 			Sched; %we are done, return to the split node that called us
 		Schedulable ->
+			?f("found ~w schedulable nodes: ~w", [length(Schedulable), Schedulable]),
 			analyze_schedulable_nodes(Schedulable, Parents, Heap, Sched, Loader)
 	end.
 	
