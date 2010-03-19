@@ -8,7 +8,7 @@ register symbol number
 slot slot_or_reg
 slot_value struct_value
 value_list opt_value_list
-register_list
+slot_or_register_list
 activation_lhs activation_rhs
 activation_value.
 
@@ -88,11 +88,13 @@ instruction -> slot equals sched activation_lhs lparen activation_rhs rparen
 %%
 %% primitive forms: %foo v1, v2; r1 = %foo v2; r1, r2 = %foo v4
 instruction -> ident lparen opt_value_list rparen
-					: #intrinsic{line_no=line_no('$1'), name=list_to_atom(unwrap('$1')), out_registers=[], in_values='$3'}.
+					: #intrinsic{line_no=line_no('$1'), name=list_to_atom(unwrap('$1')), out_lhsides=[], in_values='$3'}.
 instruction -> register equals ident lparen opt_value_list rparen
-					: #intrinsic{line_no=line_no('$2'), name=list_to_atom(unwrap('$3')), out_registers=['$1'], in_values='$5'}.
-instruction -> register comma register_list equals ident lparen opt_value_list rparen
-					: #intrinsic{line_no=line_no('$4'), name=list_to_atom(unwrap('$5')), out_registers=['$1'|'$3'], in_values='$7'}.
+					: #intrinsic{line_no=line_no('$2'), name=list_to_atom(unwrap('$3')), out_lhsides=['$1'], in_values='$5'}.
+instruction -> slot equals ident lparen opt_value_list rparen
+					: #intrinsic{line_no=line_no('$2'), name=list_to_atom(unwrap('$3')), out_lhsides=['$1'], in_values='$5'}.
+instruction -> slot_or_reg comma slot_or_register_list equals ident lparen opt_value_list rparen
+					: #intrinsic{line_no=line_no('$4'), name=list_to_atom(unwrap('$5')), out_lhsides=['$1'|'$3'], in_values='$7'}.
 
 opt_value_list -> '$empty' : [].
 opt_value_list -> value_list : '$1'.
@@ -100,8 +102,8 @@ opt_value_list -> value_list : '$1'.
 value_list -> value : ['$1'].
 value_list -> value comma value_list : ['$1'|'$3'].
 
-register_list -> register : ['$1'].
-register_list -> register comma register_list : ['$1'|'$3'].
+slot_or_register_list -> slot_or_reg : ['$1'].
+slot_or_register_list -> slot_or_reg comma slot_or_register_list : ['$1'|'$3'].
 
 %%
 %% INDIRECT READS/WRITES

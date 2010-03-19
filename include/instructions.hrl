@@ -21,17 +21,17 @@
 % Example: <pre>%reg1 -> %reg2</pre>.
 -record (order, {line_no, lhs, rhs}). 
 
-% @type intrinsic(LineNo, Name, OutRegisters, InValues)
+% @type intrinsic(LineNo, Name, OutLHSides, InValues)
 %	LineNo = integer()
 %	Name = atom()
 %	InValues = [values:compiletime_value()]
-%	OutRegisters = [values:reg()].
+%	OutLHSides = [values:reg()|values:slot()].
 % calls the intrinsic function 'Name', passing the InValues and writing back the result(s) into
 % the OutRegisters. InValues and OutRegisters can be empty lists.
 % Note, that the number and types of required in-values and the number and types of returned
 % values are defined by the intrinsic function.
 % Example: <pre>%reg1, %reg2 = somefun 42, 'sym, %reg</pre>
--record (intrinsic, {line_no, name, out_registers, in_values}). %primitive operations, in_values=[value]
+-record (intrinsic, {line_no, name, out_lhsides, in_values}). %primitive operations, in_values=[value]
 
 % @type schedule(LineNo, Nth, Target, Block, Struct)
 % 	LineNo = integer()

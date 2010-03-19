@@ -17,6 +17,8 @@ analyze({error, Reason}, _Options) ->
 analyze(Loader, Options) ->
 	global_options:set(Options),
 	debug:setup_tracing(),
+	%make sure the intrinsics are loaded
+	intrinsics:module_info(),
 	%create some IDs
 	RootNodeLoc = node:root_node_id(),
 	ThisLoc = heap:struct_loc(1, RootNodeLoc),

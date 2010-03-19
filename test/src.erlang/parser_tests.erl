@@ -103,6 +103,7 @@ assembler_syntax_test() ->
 		prim('one, %reg[%two])
 		%reg = prim(this['one])
 		%reg, %reg = prim(1, 2, 'three, %four)
+		%reg, %reg['foo], %this = blubb(1, 2)
 		
 		;activations variant 1
 		sched %reg(%reg)

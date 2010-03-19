@@ -12,7 +12,15 @@
 
 new(Closure) ->
 	#atom_node{closure=Closure}.
-	
+
+get_block_ref(MyNodeID, Sched) ->
+	#atom_node{closure=Closure} = sched:get_node(MyNodeID, Sched),
+	closure:block_ref(Closure).
+
+get_struct_loc(MyNodeID, Sched) ->
+	#atom_node{closure=Closure} = sched:get_node(MyNodeID, Sched),
+	closure:struct_loc(Closure).
+		
 analyze(MyNodeID, _Parents, Heap, Sched, Loader) ->
 	#atom_node{closure=Closure} = sched:get_node(MyNodeID, Sched),
 	
@@ -42,10 +50,27 @@ analyze_instruction(#order{line_no=LN}=I, _Now, This, {Regs, Sched, Heap}) ->
 	node:assert_node_id(Rhs),
 	Sched2 = sched:new_edge(Lhs, Rhs, Sched),
 	{Regs, Sched2, Heap};
-analyze_instruction(#intrinsic{line_no=LN}=I, _Now, This, {Regs, Sched, Heap}) ->
+analyze_instruction(#intrinsic{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
 	?f("Instruction ~w", [I]),
-	{Regs, Sched, Heap};
+	
+	{InValues, Heap2} = lists:mapfoldl(fun(Val, HeapAcc)->
+			value(Val, Now, This, {Regs, Sched, HeapAcc})
+		end,
+		Heap,
+		I#intrinsic.in_values
+	),
+	
+	Name = I#intrinsic.name,
+	{Regs2, Heap3} = case erlang:function_exported(intrinsics, Name, length(InValues)+1) of
+		true ->
+			ResultValues = apply(intrinsics, Name, [Sched|InValues]),
+			store_values(I#intrinsic.out_lhsides, ResultValues, This, {Regs, Heap2});
+		false ->
+			debug:fatal("Invalid intrinsic ~w with parameters [*sched*|~w] in line ~w, ~s", [Name, InValues, debug:get_context(line_no), debug:get_context(block_info)]),
+			error
+	end,
+	{Regs2, Sched, Heap3};
 analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
 	?f("Instruction ~w", [I]),
@@ -60,15 +85,16 @@ analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	{Regs2, Heap3} = store(I#schedule.target, NewNodeLoc, This, Regs, Heap2),
 	{Regs2, Sched3, Heap3}.
 	
-get_block_ref(MyNodeID, Sched) ->
-	#atom_node{closure=Closure} = sched:get_node(MyNodeID, Sched),
-	closure:block_ref(Closure).
-
-get_struct_loc(MyNodeID, Sched) ->
-	#atom_node{closure=Closure} = sched:get_node(MyNodeID, Sched),
-	closure:struct_loc(Closure).
-	
 % helpers; those functions essentially follow the grammar
+store_values([], [], _This, {Regs, Heap}) ->
+	{Regs, Heap};
+store_values([], _Some, _This, _RH) ->
+	debug:fatal("Trying to store more values than available return places in line ~w, ~s", [debug:get_context(line_no), debug:get_context(block_info)]);
+store_values(_Some, [], _This, _RH) ->
+	debug:fatal("Trying to store less values than available return places in line ~w, ~s", [debug:get_context(line_no), debug:get_context(block_info)]);	
+store_values([Place|MorePlaces], [Value|MoreValues], This, {Regs, Heaps}) ->
+	store_values(MorePlaces, MoreValues, This, store(Place, Value, This, Regs, Heaps)).
+	
 store(undefined, _, _, Regs, Heap) ->
 	{Regs, Heap};
 store(#reg{}=R, Value, _This, Regs, Heap) ->
