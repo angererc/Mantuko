@@ -12,9 +12,6 @@ setup_tracing() ->
 		MFAs ->
 			tracer:start(MFAs)
 	end.
-
-get_indentation() ->
-	tracer:indentation().	
 	
 fatal(String, Params) ->
 	tracer:display_string(?FATAL, String, Params).
