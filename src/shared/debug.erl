@@ -14,11 +14,11 @@ setup_tracing() ->
 			tracer:start(MFAs)
 	end.
 
-set_context(SomeInfo) ->
-	put(debug_info_context, SomeInfo).
+set_context(Key, SomeInfo) ->
+	put({debug_info_context, Key}, SomeInfo).
 	
-get_context() ->
-	get(debug_info_context).
+get_context(Key) ->
+	get({debug_info_context, Key}).
 		
 fatal(String, Params) ->
 	tracer:display_string(?FATAL, String, Params).
