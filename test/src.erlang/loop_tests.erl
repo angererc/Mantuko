@@ -10,11 +10,9 @@ loop_1_test() ->
 	%i:ib(analyzer, analyze, 2),
 	analyzer:analyze_file("test/src.mantuko/loop_1.masm", 
 		[{trace, [
-			{node},			
-			{split_node},
-			{union_node},
+			{split_node, analyze},
+			{union_node, analyze},
 			{atom_node, analyze},
-			{atom_node, analyze_instruction},
-			{heap}
+			{atom_node, analyze_instruction}
 		]},
 		{trace_verbosity, 9}]).

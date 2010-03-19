@@ -15,10 +15,21 @@ block_ref(Closure) ->
 struct_loc(Closure) ->
 	Closure#closure.struct_loc.
 
-% -> set()
+% set() -> set(block_ref())
 extract_blocks(Closures) ->
-	lists:foldl(fun(Closure, Set)-> sets:add_element(Closure#closure.block_ref, Set) end, sets:new(), Closures).
+	sets:fold(
+		fun(Closure, Set)-> 
+			sets:add_element(Closure#closure.block_ref, Set) 
+		end, 
+		sets:new(), 
+		Closures).
 
+% set -> set(struct_loc())
 extract_structs(Closures) ->
-	lists:foldl(fun(Closure, Set)-> sets:add_element(Closure#closure.struct_loc, Set) end, sets:new(), Closures).
+	sets:fold(
+		fun(Closure, Set)-> 
+			sets:add_element(Closure#closure.struct_loc, Set) 
+		end, 
+		sets:new(), 
+		Closures).
 	

@@ -13,6 +13,7 @@
 -record (atom_node_id, {path}).
 
 % faking some virtual method call and inheritance here
+% -> sched()
 analyze(#split_node_id{}=Loc, Parents, Heap, Sched, Loader) ->
 	split_node:analyze(Loc, Parents, Heap, Sched, Loader);
 analyze(#union_node_id{}=Loc, Parents, Heap, Sched, Loader) ->

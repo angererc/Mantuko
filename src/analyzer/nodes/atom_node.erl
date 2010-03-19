@@ -22,18 +22,24 @@ get_struct_loc(MyNodeID, Sched) ->
 	closure:struct_loc(Closure).
 		
 analyze(MyNodeID, _Parents, Heap, Sched, Loader) ->
-	#atom_node{closure=Closure} = sched:get_node(MyNodeID, Sched),
+	#atom_node{closure=Closure}=MyNode = sched:get_node(MyNodeID, Sched),
+	
+	MySched = sched:set_node(MyNodeID, MyNode, sched:new()),
 	
 	#block{name=N, filename=FN, start_line=S, end_line=E, body=Body} = loader:get_block(closure:block_ref(Closure), Loader),
 	debug:set_context(block_info, lists:flatten(io_lib:format("block ~w in file ~s:~w-~w", [N, FN, S, E]))),
 	?f("analyzing block ~w", [element(3,closure:block_ref(Closure))]),
 	
 	This = closure:struct_loc(Closure),
-	lists:foldl(fun(Instruction, Acc)->
+	{_Regs, MySched2, Heap2} = lists:foldl(fun(Instruction, Acc)->
 			analyze_instruction(Instruction, MyNodeID, This, Acc)
 		end,
-		{dict:new(), sched:new(), Heap},
-		Body).
+		{dict:new(), MySched, Heap},
+		Body),
+		
+	%store the result heap
+	MySched3 = sched:set_result(MyNodeID, Heap2, MySched2),
+	MySched3.
 	
 analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, Sched, _Heap}=RSH) ->
 	debug:set_context(line_no, LN),
@@ -84,8 +90,11 @@ analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	
 	{Regs2, Heap3} = store(I#schedule.target, NewNodeLoc, This, Regs, Heap2),
 	{Regs2, Sched3, Heap3}.
-	
-% helpers; those functions essentially follow the grammar
+
+%****************************************	
+% Store helpers
+%****************************************
+
 store_values([], [], _This, {Regs, Heap}) ->
 	{Regs, Heap};
 store_values([], _Some, _This, _RH) ->
@@ -107,6 +116,9 @@ store(#slot{context=C, slot=S}, Value, This, Regs, Heap) ->
 	Heap2 = heap:set(StructLoc, Struct2, Heap),
 	{Regs, Heap2}.
 	
+%****************************************
+% read helpers
+%****************************************
 reg(Reg, Regs) ->
 	case dict:find(Reg, Regs) of
 		{ok, Value} ->
@@ -123,7 +135,11 @@ potential_set(Type, X) ->
 		false ->
 			X
 	end.
-	
+
+%****************************************
+% interpreting the AST; this part follows 
+% the grammar pretty closely
+%****************************************	
 activation_lhs(#block_ref{}=V, _This, _Regs, _Heap) ->
 	V;
 activation_lhs(SlotOrReg, This, Regs, Heap) ->
