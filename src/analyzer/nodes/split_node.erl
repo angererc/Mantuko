@@ -29,7 +29,7 @@ analyze(MyNodeID, Parents, Heap, Sched, Loader) ->
 			loop_found;
 		false ->
 			Sched3 = create_nodes(MyNodeID, Closures, Sched2),
-			analyze_open_nodes([MyNodeID|Parents], Heap, Sched3, Loader)
+			analyze_till_fixed_point([MyNodeID|Parents], Heap, Sched3, Loader)
 	end.
 
 create_nodes(MyNodeID, Closures, Sched)	->
@@ -59,8 +59,11 @@ get_struct_locs(MyNodeID, Sched) ->
 	#split_node{closures=Closures} = sched:get_node(MyNodeID, Sched),
 	closure:extract_structs(Closures).
 		
-analyze_open_nodes(Parents, Heap, Sched, Loader) ->
-	%we ran out of schedulable nodes
+analyze_till_fixed_point(Parents, Heap, Sched, Loader) ->
+	%since initially, I get the old schedule here, the find_schedulable_nodes
+	%will find nodes from my parent that might look schedulable but are not my business.
+	%I probably want to keep the parent schedule out of this... or only use the
+	%already analyzed ones, but not the open ones...
 	case sched:get_schedulable_nodes(Sched) of
 		[] -> 
 			Open = sched:get_open_nodes(Sched),
@@ -75,11 +78,12 @@ analyze_schedulable_nodes(Schedulable, Parents, Heap, Sched, Loader) ->
 	ChildSchedules = lists:map(fun(ChildNodeID)->
 			ChildHeap = heap:compute_incoming_heap(ChildNodeID, Heap),
 			%every node can be analyzed starting from our schedule; they cannot influence each other!
-			node:analyze(ChildNodeID, Parents, ChildHeap, Sched, Loader)
+			ChildSched = node:analyze(ChildNodeID, Parents, ChildHeap, Sched, Loader),
+			ChildSched
 		end,
 		Schedulable),
 	FoldedSched = lists:foldl(fun(ChildSched, Acc)-> sched:merge(Acc, ChildSched) end, Sched, ChildSchedules),
-	analyze_open_nodes(Parents, Heap, FoldedSched, Loader).
+	analyze_till_fixed_point(Parents, Heap, FoldedSched, Loader).
 	
 check_for_loop(_MyClosures, [], _Sched) ->
 	false;
