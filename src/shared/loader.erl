@@ -1,6 +1,7 @@
 -module (loader).
 
 -include("include/values.hrl").
+-include("include/loader.hrl").
 
 -export ([new/0, load_from_string/1, load_from_file/1]).
 -export ([get_block/2, contains_block/2, add_block/2, add_all_blocks/2]).
@@ -38,6 +39,8 @@ load_from_file(Filename) ->
 	end.
 	
 % @spec get_block(atom(), loader()) -> values:block() | false
+get_block(#block_ref{name=ID}, Loader) ->
+	get_block(ID, Loader);
 get_block(BlockID, Loader) ->
 	case lists:keysearch(BlockID, ?BLOCK_ID_POS, Loader) of
 		{value, Block} -> Block;
