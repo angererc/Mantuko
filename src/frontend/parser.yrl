@@ -6,7 +6,7 @@ literal_block block_ref
 instruction value 
 register symbol number 
 slot slot_or_reg
-slot_value struct_value
+slot_name struct_loc
 value_list opt_value_list
 slot_or_register_list
 activation_lhs activation_rhs
@@ -111,13 +111,13 @@ slot_or_register_list -> slot_or_reg comma slot_or_register_list : ['$1'|'$3'].
 
 %we don't allow a slot to be used as a slot value because that allows recursion and we don't want that
 % in the assembly language (e.g., this[%reg[this['foo]]])
-slot_value -> register : '$1'.
-slot_value -> symbol : '$1'.
-slot_value -> number : '$1'.
+slot_name -> register : '$1'.
+slot_name -> symbol : '$1'.
+slot_name -> number : '$1'.
 
 %same here, we don't want to have this['foo]['bar]['blubb] in the assembly even though it would work easily
-struct_value -> register : '$1'.
-struct_value -> this : #this{}.
+struct_loc -> register : '$1'.
+struct_loc -> this : #this{}.
 
 %%
 %% VALUES
@@ -143,7 +143,7 @@ activation_value -> slot_or_reg : '$1'.
 slot_or_reg -> register : '$1'.
 slot_or_reg -> slot : '$1'.
 
-slot -> struct_value lsquare slot_value rsquare : #slot{context='$1', slot='$3'}.
+slot -> struct_loc lsquare slot_name rsquare : #slot{context='$1', slot='$3'}.
 register -> reg_ident : #reg{name=list_to_atom(lists:nthtail(1,unwrap('$1')))}.
 symbol -> sym_ident : #sym{nth=inc(nth), name=list_to_atom(lists:nthtail(1, unwrap('$1')))}.
 number -> num : #num{nth=inc(nth), value=nummeric_value_from_string_token('$1')}.
