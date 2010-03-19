@@ -1,8 +1,10 @@
 -module (struct).
 
--include("include/heap.hrl").
+-include("include/values.hrl").
 
 -export ([new/0]).
+
+%-record (struct, {}).
 
 new() ->
 	ok.

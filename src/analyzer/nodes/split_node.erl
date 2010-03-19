@@ -1,80 +1,78 @@
 -module (split_node).
 
 -include("include/debug.hrl").
--include("include/heap.hrl").
--include("include/nodes.hrl").
 
--export ([new/0, create_union_node/2, add_option/3, analyze/6]).
+-export ([new/0, create_union_node/2, add_closure/2, analyze/5]).
+
+-record (split_node, {closures}).
 
 new() ->
-	#split_node{activation_options=sets:new()}.
+	#split_node{closures=sets:new()}.
 	
-create_union_node(BranchInActivationRef, Sched) ->
-	BranchOutRef = refs:activation_ref(refs:union_node(), BranchInActivationRef),
+create_union_node(SplitNodeID, Sched) ->
+	BranchOutRef = node:union_node_id(SplitNodeID),
 	BranchOutNode = union_node:new(),
 	Sched2 = sched:set_node(BranchOutRef, BranchOutNode, Sched),
-	Sched3 = sched:new_edge(BranchInActivationRef, BranchOutRef, Sched2),
+	Sched3 = sched:new_edge(SplitNodeID, BranchOutRef, Sched2),
 	Sched3.
 	
-add_option(BlockRef, ThisLoc, #split_node{activation_options=AOs}=Node) ->
-	Node#split_node{
-		activation_options=sets:add_element(
-							refs:activation_option(BlockRef, ThisLoc),
-							AOs)}.
+add_closure(Closure, #split_node{closures=Closures}=Node) ->
+	Node#split_node{closures=sets:add_element(Closure, Closures)}.
 	
-analyze(ActivationRef, #split_node{activation_options=AOs}, Parents, Heap, Sched, Loader) ->
+analyze(MyNodeID, Parents, Heap, Sched, Loader) ->
+	#split_node{closures=Closures} = sched:get_node(MyNodeID, Sched),
 	%store the incoming heap
-	Sched2 = sched:set_result(ActivationRef, Heap, Sched),
-	case check_for_loop(AOs, Parents, Sched) of
+	Sched2 = sched:set_result(MyNodeID, Heap, Sched),
+	case check_for_loop(Closures, Parents, Sched) of
 		{true, _Parent} ->
 			loop_found;
 		false ->
-			{Sched3, NewNodes} = create_nodes(ActivationRef, AOs, Sched2),
-			analyze_children(ActivationRef, NewNodes, [], [ActivationRef|Parents], Heap, Sched3, Loader)
+			{Sched3, NewNodes} = create_nodes(MyNodeID, Closures, Sched2),
+			analyze_children(NewNodes, [], [MyNodeID|Parents], Heap, Sched3, Loader)
 	end.
 
-create_nodes(ActivationRef, ActivationOptions, Sched)	->
-	sets:fold( %create a node for each option and add the edges
-		fun(Option, {SchedAcc, NewNodes})-> 
-			NewActivationRef = refs:activation_ref(Option, ActivationRef),
-			NewNode = atom_node:new(Option),
-			SchedAcc2 = sched:set_node(NewActivationRef, NewNode, SchedAcc),
+create_nodes(MyNodeID, Closures, Sched)	->
+	sets:fold( %create a node for each closure and add the edges
+		fun(Closure, {SchedAcc, NewNodes})-> 
+			NewNodeID = node:atom_node_id(Closure, MyNodeID),
+			NewNode = atom_node:new(Closure),
+			SchedAcc2 = sched:set_node(NewNodeID, NewNode, SchedAcc),
 			% this branch node created the new activation
-			SchedAcc3 = sched:new_edge(ActivationRef, NewActivationRef, SchedAcc2),
+			SchedAcc3 = sched:new_edge(MyNodeID, NewNodeID, SchedAcc2),
 			% add a happens-before between the new activation and our branch_out node
 			%the branch out node has been created before when this branch node has been created
 			SchedAcc4 = sched:new_edge(
-							NewActivationRef, 
-							refs:activation_ref(refs:union_node(), ActivationRef), 
+							NewNodeID, 
+							node:union_node_id(MyNodeID),
 							SchedAcc3),
 			%and continue with the next option
-			{SchedAcc4, [NewActivationRef|NewNodes]}
+			{SchedAcc4, [NewNodeID|NewNodes]}
 		end, 
-		{Sched, []}, ActivationOptions).
+		{Sched, []}, Closures).
 		
 %we added ourselves to Parents already!
-analyze_children(_ActivationRef, [], Leftovers, _Parents, _Heap, _Sched, _Loader) ->
+analyze_children([], Leftovers, _Parents, _Heap, _Sched, _Loader) ->
 	Leftovers;
-analyze_children(ActivationRef, [ChildActivationRef|Rest], Leftovers, Parents, Heap, Sched, Loader) ->
-	case sched:is_schedulable(ChildActivationRef, Sched) of
+analyze_children([ChildNodeID|Rest], Leftovers, Parents, Heap, Sched, Loader) ->
+	case sched:is_schedulable(ChildNodeID, Sched) of
 		true ->
-			ChildHeap = heap:compute_incoming_heap(ChildActivationRef, Heap),
-			ChildLeftovers = node:analyze(ChildActivationRef, Parents, ChildHeap, Sched, Loader),
-			analyze_children(ActivationRef, Rest ++ ChildLeftovers, Leftovers, Parents, Heap, Sched, Loader);
+			ChildHeap = heap:compute_incoming_heap(ChildNodeID, Heap),
+			ChildLeftovers = node:analyze(ChildNodeID, Parents, ChildHeap, Sched, Loader),
+			analyze_children(Rest ++ ChildLeftovers, Leftovers, Parents, Heap, Sched, Loader);
 		false ->
-			analyze_children(ActivationRef, Rest, [ChildActivationRef, Leftovers], Parents, Heap, Sched, Loader)
+			analyze_children(Rest, [ChildNodeID, Leftovers], Parents, Heap, Sched, Loader)
 	end.
 
 
 
-check_for_loop(_MyActivationOptions, [], _Sched) ->
+check_for_loop(_MyClosures, [], _Sched) ->
 	false;
-check_for_loop(MyActivationOptions, [Parent|Grandpa], Sched) ->
-	#split_node{activation_options=ParentActivationOptions} = sched:get_node(Parent, Sched),
-	MyActivationBlocks = refs:blocks_from_activation_options(MyActivationOptions),
-	ParentActivationBlocks = refs:blocks_from_activation_options(ParentActivationOptions),
+check_for_loop(MyClosures, [Parent|Grandpa], Sched) ->
+	#split_node{closures=ParentClosures} = sched:get_node(Parent, Sched),
+	MyActivationBlocks = closures:extract_blocks(MyClosures),
+	ParentActivationBlocks = closures:extract_blocks(ParentClosures),
 	case sets:size(sets:intersection(MyActivationBlocks, ParentActivationBlocks)) of
-		0 -> check_for_loop(MyActivationOptions, Grandpa, Sched);
+		0 -> check_for_loop(MyClosures, Grandpa, Sched);
 		_Else -> {true, Parent}
 	end.
 	

@@ -1,14 +1,14 @@
 -module (atom_node).
 
 -include("include/debug.hrl").
--include("include/heap.hrl").
--include("include/nodes.hrl").
 
--export ([new/1, analyze/6]).
+-export ([new/1, analyze/5]).
 
-new(ActivationOption) ->
-	#atom_node{activation_option=ActivationOption}.
+-record (atom_node, {closure}).
+
+new(Closure) ->
+	#atom_node{closure=Closure}.
 	
-analyze(_ActivationRef, #atom_node{activation_option=Option}, _Parents, _Heap, _Sched, Loader) ->
-	_Block = loader:get_block(refs:activation_option_block_ref(Option), Loader),
+analyze(_NodeID, _Parents, _Heap, _Sched, _Loader) ->
+	%_Block = loader:get_block(refs:closure_block_ref(Option), Loader),
 	[].

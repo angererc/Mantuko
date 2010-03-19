@@ -1,6 +1,6 @@
 % @type value() = runtime_value() | abstract_value() | compiletime_value().
 
-% @type runtime_value() = loc() | act() | nil_() | num() | sym() | block().
+% @type runtime_value() = heap:struct_loc() | heap:array_loc() | heap:lock_loc() | heap:activation_loc() | nil_() | num() | sym() | block().
 % those values are available during runtime, a.k.a. immediates.
 
 % @type abstract_value() = any_() | some() | option().
@@ -12,7 +12,7 @@
 % @type slot_name_value() = reg() | sym() | num().
 % A value that can be used as a slot name
 
-% @type creating_value() = sym() | num() | block_ref() | struct() | array() | lock() | instructions:activate().
+% @type creating_value() = sym() | num() | block_ref() | new_struct() | new_array() | new_lock() | instructions:activate().
 % a value that creates a new entity for the analysis such as constants and new statements
 % all those values have a block-local id (called nth) to distinguish them syntactically
 
@@ -22,21 +22,7 @@
 % runtime values
 % *****************************
 
-% @type loc(CreationStatement, Activation, Index)
-% 	Activation = act()
-%	CreationStatement = creation_statement().
-% A location plays the role of a memory address for structs. Locations are
-% created during analysis and not by the parser.
-% @see struct
--record (loc, {creation_statement, activation_ref}). %struct location
-
-% @type activation_ref(PathCompontents)
-% 	PathCompontents = list(new_statement()|refs:activation_option()).
-% An identifier for an activation that is being analyzed.
-% the path is a path in the creation tree starting from the root; (the root is the last element in the array)
-% each component is either an option or an nth index telling you where to go in the creation tree
-% to reach the node;
--record (activation_ref, {path_components}).
+% see heap.hrl
 
 % *****************************
 % abstract values
@@ -91,7 +77,6 @@
 %	Name = atom().
 % A reference to another block;
 -record (block_ref, {nth, name}).
-
 
 % @type act_block(Activation)
 %	Activation = now() | reg().

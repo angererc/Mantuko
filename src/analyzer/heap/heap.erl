@@ -1,14 +1,35 @@
 -module (heap).
 
 -include("include/values.hrl").
--include("include/heap.hrl").
 
 -export ([new/0, new_struct/2, new_array/2, new_lock/2]).
+-export ([loc_type/1, struct_loc/2, array_loc/2, lock_loc/2]).
 -export ([get/2, set/3]).
 -export ([compute_incoming_heap/2]).
 
 -record (heap, {mem=dict:new()}).
 
+-record (struct_loc, {nth, act_loc}).
+-record (array_loc, {nth, act_loc}).
+-record (lock_loc, {nth, act_loc}).
+
+% ***********************************************
+%	Locations
+% ***********************************************
+loc_type(Loc) ->
+	element(1, Loc).
+	
+struct_loc(Nth, ActLoc) when is_integer(Nth) ->
+	#struct_loc{nth=Nth, act_loc=ActLoc}.
+	
+array_loc(Nth, ActLoc) when is_integer(Nth) ->
+	#array_loc{nth=Nth, act_loc=ActLoc}.
+	
+lock_loc(Nth, ActLoc) when is_integer(Nth) ->
+	#lock_loc{nth=Nth, act_loc=ActLoc}.
+
+% ***********************************************
+% ***********************************************
 new() ->
 	#heap{}.
 	

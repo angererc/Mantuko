@@ -1,7 +1,5 @@
 -module (sched).
 
--include("include/heap.hrl").
-
 -export ([new/0]).
 -export ([new_edge/3, set_node/3, set_result/3]).
 -export ([get_node/2, is_schedulable/2]).
@@ -12,36 +10,36 @@
 new() ->
 	#sched{nodes=dict:new(), edges=[], results=dict:new()}.
 	
-new_edge(SourceActivationRef, TargetActivationRef, Sched) ->
-	Sched#sched{edges=[{SourceActivationRef, TargetActivationRef}|Sched#sched.edges]}.
+new_edge(SourceNodeID, TargetNodeID, Sched) ->
+	Sched#sched{edges=[{SourceNodeID, TargetNodeID}|Sched#sched.edges]}.
 	
-set_node(ActivationRef, Node, Sched) ->
-	Sched#sched{nodes=dict:store(ActivationRef, Node, Sched#sched.nodes)}.
+set_node(NodeID, Node, Sched) ->
+	Sched#sched{nodes=dict:store(NodeID, Node, Sched#sched.nodes)}.
 	
-set_result(ActivationRef, Heap, Sched) ->
-	Sched#sched{results=dict:store(ActivationRef, Heap, Sched#sched.results)}.
+set_result(NodeID, Heap, Sched) ->
+	Sched#sched{results=dict:store(NodeID, Heap, Sched#sched.results)}.
 	
-get_node(ActivationRef, Sched) ->
-	case dict:find(ActivationRef, Sched#sched.nodes) of
+get_node(NodeID, Sched) ->
+	case dict:find(NodeID, Sched#sched.nodes) of
 		{ok, Value} ->
 			Value;
 		error ->
-			debug:fatal("asked for node '~p' that doesn't exist!!!", [ActivationRef]),
+			debug:fatal("asked for node '~p' that doesn't exist!!!", [NodeID]),
 			error
 	end.
 	
-in_neighbours(ActivationRef, Sched) ->
+in_neighbours(NodeID, Sched) ->
 	lists:foldl(
 			fun({Source, Target}, Acc)->
 			if
-				Target =:= ActivationRef -> [Source|Acc];
+				Target =:= NodeID -> [Source|Acc];
 				true -> Acc
 			end
 		end,
 		[],
 		Sched#sched.edges).
 	
-is_schedulable(ActivationRef, Sched) ->
-	IncomingNodes = in_neighbours(ActivationRef, Sched),
+is_schedulable(NodeID, Sched) ->
+	IncomingNodes = in_neighbours(NodeID, Sched),
 	%if we have a result for every incoming node, we are good to go...
 	lists:all(fun(In)-> dict:is_key(In, Sched#sched.results) end, IncomingNodes).
