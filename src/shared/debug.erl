@@ -3,7 +3,7 @@
 -include("include/debug.hrl").
 
 -export ([setup_tracing/0, fatal/2, warning/2, log/2, debug/2]).
--export ([set_context/1, get_context/0]).
+-export ([set_context/2, get_context/1]).
 -export ([args_to_string/1, val_to_string/1]).
 
 setup_tracing() ->
