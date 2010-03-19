@@ -158,6 +158,7 @@ Erlang code.
 
 -include("include/instructions.hrl").
 -include("include/values.hrl").
+-include("include/loader.hrl").
 -export([parse_from_string/2]).
 
 %*********************************
