@@ -13,13 +13,13 @@
 
 % @type order(LineNo, Lhs, Rhs)
 %	LineNo = integer()
-%	Lhs = values:reg()
-%	Rhs = values:reg().
+%	Lhs = values:reg() | values:slot()
+%	Rhs = values:reg() | values:slot().
 % creates a new edge in the schedule.
 % Node: a schedule: now -> %reg doesn't make sense because that's only legal iff there is an
 % edge between now and the activation in %reg already.
 % Example: <pre>%reg1 -> %reg2</pre>.
--record (order, {line_no, lhs, rhs}). %lhs=register, rhs=register|activation
+-record (order, {line_no, lhs, rhs}). 
 
 % @type intrinsic(LineNo, Name, OutRegisters, InValues)
 %	LineNo = integer()

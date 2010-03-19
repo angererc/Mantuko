@@ -13,7 +13,8 @@ loop_1_test() ->
 			{node},			
 			{split_node},
 			{union_node},
-			{atom_node},
+			{atom_node, analyze},
+			{atom_node, analyze_instruction},
 			{heap}
 		]},
 		{trace_verbosity, 9}]).

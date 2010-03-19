@@ -45,17 +45,17 @@ new_array(Loc, Heap) ->
 new_lock(Loc, Heap) ->
 	Heap#heap{mem=utils:dict_store_if_not_present(Loc, fun lock:new/0, Heap#heap.mem)}.
 		
-get(Ref, Heap) ->
-	case dict:find(Ref, Heap#heap.mem) of
+get(Loc, Heap) ->
+	case dict:find(Loc, Heap#heap.mem) of
 		{ok, Value} ->
 			Value;
 		error ->
-			debug:fatal("didn't find object for ref ~w", [Ref]),
+			debug:fatal("didn't find object for ref ~w", [Loc]),
 			error
 	end.
 	
-set(Ref, Obj, Heap) ->
-	Heap#heap{mem=dict:store(Ref, Obj, Heap#heap.mem)}.
+set(Loc, Obj, Heap) ->
+	Heap#heap{mem=dict:store(Loc, Obj, Heap#heap.mem)}.
 	
-compute_incoming_heap(_Ref, Heap) ->
+compute_incoming_heap(_Loc, Heap) ->
 	Heap.
