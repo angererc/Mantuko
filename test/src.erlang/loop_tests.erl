@@ -11,9 +11,9 @@ loop_1_test() ->
 	analyzer:analyze_file("test/src.mantuko/loop_1.masm", 
 		[{trace, [
 			{node},			
-			{branch_in_node},
-			{branch_out_node},
-			{option_node},
+			{split_node},
+			{union_node},
+			{atom_node},
 			{heap}
 		]},
 		{trace_verbosity, 9}]).

@@ -9,11 +9,11 @@
 % faking some virtual method call and inheritance here
 analyze(ActivationRef, Parents, Heap, Sched, Loader) ->
 	case sched:get_node(ActivationRef, Sched) of
-		#branch_in_node{}=Node ->
-			branch_in_node:analyze(ActivationRef, Node, Parents, Heap, Sched, Loader);
-		#branch_out_node{}=Node ->
-			branch_out_node:analyze(ActivationRef, Node, Parents, Heap, Sched, Loader);
-		#option_node{}=Node ->
-			option_node:analyze(ActivationRef, Node, Parents, Heap, Sched, Loader)
+		#split_node{}=Node ->
+			split_node:analyze(ActivationRef, Node, Parents, Heap, Sched, Loader);
+		#union_node{}=Node ->
+			union_node:analyze(ActivationRef, Node, Parents, Heap, Sched, Loader);
+		#atom_node{}=Node ->
+			atom_node:analyze(ActivationRef, Node, Parents, Heap, Sched, Loader)
 	end.
 	

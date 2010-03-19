@@ -23,14 +23,14 @@ analyze(Loader, Options) ->
 	ThisLoc = refs:struct_loc(1, RootNodeRef),
 		
 	%create a root branch node with the main block as the only option
-	RootNode = branch_in_node:add_option(
+	RootNode = split_node:add_option(
 						#block_ref{nth=2, name={main}}, 
 						ThisLoc, 
-						branch_in_node:new()),
+						split_node:new()),
 	
 	%create a schedule and heap
 	Sched = sched:set_node(RootNodeRef, RootNode, sched:new()),
-	Sched2 = branch_in_node:create_branch_out_node(RootNodeRef, Sched),
+	Sched2 = split_node:create_union_node(RootNodeRef, Sched),
 	
 	Heap = heap:new_struct(ThisLoc, heap:new()),
 	

@@ -1,4 +1,4 @@
--module (branch_out_node).
+-module (union_node).
 
 -include("include/debug.hrl").
 -include("include/heap.hrl").
@@ -7,7 +7,7 @@
 -export ([new/0, analyze/6]).
 
 new() ->
-	#branch_out_node{}.
+	#union_node{}.
 	
 analyze(_ActivationRef, _Node, _Parents, _Heap, _Sched, _Loader) ->
 	ok.

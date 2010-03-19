@@ -1,28 +1,28 @@
--module (branch_in_node).
+-module (split_node).
 
 -include("include/debug.hrl").
 -include("include/heap.hrl").
 -include("include/nodes.hrl").
 
--export ([new/0, create_branch_out_node/2, add_option/3, analyze/6]).
+-export ([new/0, create_union_node/2, add_option/3, analyze/6]).
 
 new() ->
-	#branch_in_node{activation_options=sets:new()}.
+	#split_node{activation_options=sets:new()}.
 	
-create_branch_out_node(BranchInActivationRef, Sched) ->
-	BranchOutRef = refs:activation_ref(refs:branch_out_node(), BranchInActivationRef),
-	BranchOutNode = branch_out_node:new(),
+create_union_node(BranchInActivationRef, Sched) ->
+	BranchOutRef = refs:activation_ref(refs:union_node(), BranchInActivationRef),
+	BranchOutNode = union_node:new(),
 	Sched2 = sched:set_node(BranchOutRef, BranchOutNode, Sched),
 	Sched3 = sched:new_edge(BranchInActivationRef, BranchOutRef, Sched2),
 	Sched3.
 	
-add_option(BlockRef, ThisLoc, #branch_in_node{activation_options=AOs}=Node) ->
-	Node#branch_in_node{
+add_option(BlockRef, ThisLoc, #split_node{activation_options=AOs}=Node) ->
+	Node#split_node{
 		activation_options=sets:add_element(
 							refs:activation_option(BlockRef, ThisLoc),
 							AOs)}.
 	
-analyze(ActivationRef, #branch_in_node{activation_options=AOs}, Parents, Heap, Sched, Loader) ->
+analyze(ActivationRef, #split_node{activation_options=AOs}, Parents, Heap, Sched, Loader) ->
 	%store the incoming heap
 	Sched2 = sched:set_result(ActivationRef, Heap, Sched),
 	case check_for_loop(AOs, Parents, Sched) of
@@ -37,7 +37,7 @@ create_nodes(ActivationRef, ActivationOptions, Sched)	->
 	sets:fold( %create a node for each option and add the edges
 		fun(Option, {SchedAcc, NewNodes})-> 
 			NewActivationRef = refs:activation_ref(Option, ActivationRef),
-			NewNode = option_node:new(Option),
+			NewNode = atom_node:new(Option),
 			SchedAcc2 = sched:set_node(NewActivationRef, NewNode, SchedAcc),
 			% this branch node created the new activation
 			SchedAcc3 = sched:new_edge(ActivationRef, NewActivationRef, SchedAcc2),
@@ -45,7 +45,7 @@ create_nodes(ActivationRef, ActivationOptions, Sched)	->
 			%the branch out node has been created before when this branch node has been created
 			SchedAcc4 = sched:new_edge(
 							NewActivationRef, 
-							refs:activation_ref(refs:branch_out_node(), ActivationRef), 
+							refs:activation_ref(refs:union_node(), ActivationRef), 
 							SchedAcc3),
 			%and continue with the next option
 			{SchedAcc4, [NewActivationRef|NewNodes]}
@@ -70,7 +70,7 @@ analyze_children(ActivationRef, [ChildActivationRef|Rest], Leftovers, Parents, H
 check_for_loop(_MyActivationOptions, [], _Sched) ->
 	false;
 check_for_loop(MyActivationOptions, [Parent|Grandpa], Sched) ->
-	#branch_in_node{activation_options=ParentActivationOptions} = sched:get_node(Parent, Sched),
+	#split_node{activation_options=ParentActivationOptions} = sched:get_node(Parent, Sched),
 	MyActivationBlocks = refs:blocks_from_activation_options(MyActivationOptions),
 	ParentActivationBlocks = refs:blocks_from_activation_options(ParentActivationOptions),
 	case sets:size(sets:intersection(MyActivationBlocks, ParentActivationBlocks)) of
