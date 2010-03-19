@@ -77,9 +77,11 @@ instruction -> slot equals value
 instruction -> slot_or_reg arrow slot_or_reg	
 					: #order{line_no=line_no('$2'), lhs='$1', rhs='$3'}.
 instruction -> sched activation_lhs lparen activation_rhs rparen
-					: #schedule{line_no=line_no('$1'), nth=inc(nth), reg=undefined, block='$2', struct='$4'}.
+					: #schedule{line_no=line_no('$1'), nth=inc(nth), target=undefined, block='$2', struct='$4'}.
 instruction -> register equals sched activation_lhs lparen activation_rhs rparen
-					: #schedule{line_no=line_no('$2'), nth=inc(nth), reg='$1', block='$4', struct='$6'}.
+					: #schedule{line_no=line_no('$2'), nth=inc(nth), target='$1', block='$4', struct='$6'}.
+instruction -> slot equals sched activation_lhs lparen activation_rhs rparen
+					: #schedule{line_no=line_no('$2'), nth=inc(nth), target='$1', block='$4', struct='$6'}.
 
 %%
 %% PRIMITIVES

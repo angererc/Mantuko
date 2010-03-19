@@ -33,14 +33,14 @@
 % Example: <pre>%reg1, %reg2 = somefun 42, 'sym, %reg</pre>
 -record (intrinsic, {line_no, name, out_registers, in_values}). %primitive operations, in_values=[value]
 
-% @type schedule(LineNo, Nth, Reg, Block, Struct)
+% @type schedule(LineNo, Nth, Target, Block, Struct)
 % 	LineNo = integer()
 %	Nth = integer()
-%	Reg = values:reg() | undefined
+%	Target = values:reg() | values:slot() | undefined
 %	Block = values:reg() | values:block_ref()
 %	Struct = values:reg() | values:new() | values:this().
 % Creates a new activation and schedules it after now(). The new activation can be assigned to a register so
 % that it can be used somewhere else (e.g., stored in a struct); if the activation is not stored in a register,
 % Target is undefined
 % Example: <pre>%reg = %blockreg(new)</pre>
--record (schedule, {line_no, nth, reg, block, struct}). %target=register|undefined, block=register|block, struct=register|new|this
+-record (schedule, {line_no, nth, target, block, struct}). %target=register|undefined, block=register|block, struct=register|new|this

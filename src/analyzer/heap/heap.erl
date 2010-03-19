@@ -33,16 +33,13 @@ lock_loc(Nth, ActLoc) when is_integer(Nth) ->
 new() ->
 	#heap{}.
 	
-new_struct(Loc, Heap) ->
-	%if the heap contains something at Loc already it is for sure a struct
-	%because the location contains the creating statement and the statement
-	%is obviously a "new struct"; intrinsics have to be careful, though!
+new_struct(#struct_loc{}=Loc, Heap) ->
 	Heap#heap{mem=utils:dict_store_if_not_present(Loc, fun struct:new/0, Heap#heap.mem)}.
 	
-new_array(Loc, Heap) ->
+new_array(#array_loc{}=Loc, Heap) ->
 	Heap#heap{mem=utils:dict_store_if_not_present(Loc, fun array:new/0, Heap#heap.mem)}.
 	
-new_lock(Loc, Heap) ->
+new_lock(#lock_loc{}=Loc, Heap) ->
 	Heap#heap{mem=utils:dict_store_if_not_present(Loc, fun lock:new/0, Heap#heap.mem)}.
 		
 get(Loc, Heap) ->

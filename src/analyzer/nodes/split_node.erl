@@ -3,6 +3,7 @@
 -include("include/debug.hrl").
 
 -export ([new/0, create_union_node/2, add_closure/2, analyze/5]).
+-export ([get_block_refs/2, get_struct_locs/2]).
 
 -record (split_node, {closures}).
 
@@ -49,6 +50,14 @@ create_nodes(MyNodeID, Closures, Sched)	->
 			{SchedAcc4, [NewNodeID|NewNodes]}
 		end, 
 		{Sched, []}, Closures).
+
+get_block_refs(MyNodeID, Sched) ->
+	#split_node{closures=Closures} = sched:get_node(MyNodeID, Sched),
+	closure:extract_blocks(Closures).
+	
+get_struct_locs(MyNodeID, Sched) ->
+	#split_node{closures=Closures} = sched:get_node(MyNodeID, Sched),
+	closure:extract_structs(Closures).
 		
 %we added ourselves to Parents already!
 analyze_children([], Leftovers, _Parents, _Heap, _Sched, _Loader) ->
