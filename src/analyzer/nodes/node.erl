@@ -69,11 +69,4 @@ merge(N1, N2) ->
 	%assert that the types are the same; this should always be the case but for reasons of sanity I do it here
 	NodeType = element(1, N1),
 	NodeType = element(1, N2),
-	case NodeType of
-		split_node ->
-			split_node_id:merge(N1, N2);
-		union_node ->
-			union_node_id:merge(N1, N2);
-		atom_node ->
-			atom_node_id:merge(N1, N2)
-	end.
+	NodeType:merge(N1, N2).

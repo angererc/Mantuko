@@ -11,7 +11,7 @@ new() ->
 	#split_node{closures=sets:new()}.
 
 merge(One, Other) ->
-	#split_node{closures=One#split_node.closures ++ Other#split_node.closures}.
+	#split_node{closures=sets:union(One#split_node.closures, Other#split_node.closures)}.
 	
 create_union_node(SplitNodeID, Sched) ->
 	UnionNodeID = node:union_node_id(SplitNodeID),
@@ -97,11 +97,8 @@ analyze_schedulable_nodes(Schedulable, Parents, MySched, Loader) ->
 		fun(ChildSched, Acc)-> 
 			sched:merge(Acc, ChildSched) 
 		end,
-		%here we use a new schedule because we want to get rid of our old understanding of what are "new" nodes 
-		%that is, we want to start with an empty new_nodes list in the schedule
-		%currently, since a child starts with our schedule, each child already contains all the stuff from us
-		%so we sould even start with an empty schedule... let's do that!
-		sched:new_empty_schedule(), 
+		%first, remove all the nodes that we just computed
+		sched:remove_new_nodes(Schedulable, MySched), 
 		ChildSchedules),
 	analyze_till_fixed_point(Parents, FoldedSched, Loader).
 	

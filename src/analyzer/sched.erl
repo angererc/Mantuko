@@ -4,6 +4,7 @@
 
 -export ([new_empty_schedule/0, new_child_schedule/1]).
 -export ([new_edge/3, new_node/2, is_new_node/2]).
+-export ([remove_new_nodes/2]).
 -export ([set_node_info/3, get_node_info/2, has_node_info/2, has_result/2, set_result/3, get_result/2]).
 -export ([get_schedulable_nodes/1, get_new_nodes/1, is_schedulable/2]).
 -export ([in_neighbours/2, merge/2]).
@@ -48,7 +49,10 @@ new_node(NodeID, Sched) ->
 	%assert_invariants(
 		Sched#sched{new_nodes=[NodeID|Sched#sched.new_nodes]}.
 	%).
-	
+
+remove_new_nodes(NodeList, Sched) ->
+	Sched#sched{new_nodes=lists:subtract(Sched#sched.new_nodes, NodeList)}.
+		
 % -> [NodeID]
 get_new_nodes(Sched) ->
 	Sched#sched.new_nodes.
