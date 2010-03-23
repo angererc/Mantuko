@@ -13,6 +13,7 @@ loop_1_test() ->
 			{split_node, analyze},
 			{union_node, analyze},
 			{atom_node, analyze},
+			{intrinsics},
 			{atom_node, analyze_instruction}
 		]},
 		{trace_verbosity, 9}]).

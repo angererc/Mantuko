@@ -31,7 +31,7 @@
 % Note, that the number and types of required in-values and the number and types of returned
 % values are defined by the intrinsic function.
 % Example: <pre>%reg1, %reg2 = somefun 42, 'sym, %reg</pre>
--record (intrinsic, {line_no, name, out_lhsides, in_values}). %primitive operations, in_values=[value]
+-record (intrinsic, {line_no, nth, name, out_lhsides, in_values}). %primitive operations, in_values=[value]
 
 % @type schedule(LineNo, Nth, Target, Block, Struct)
 % 	LineNo = integer()

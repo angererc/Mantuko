@@ -48,9 +48,9 @@ analyze(MyNodeID, _Parents, Heap, ParentSched, Loader) ->
 	MySched3 = sched:set_result(MyNodeID, Heap2, MySched2),
 	MySched3.
 	
-analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, Sched, _Heap}=RSH) ->
+analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, Sched, Heap}=RSH) ->
 	debug:set_context(line_no, LN),
-	?f("Instruction ~w", [I]),
+	?f("Instruction ~w; this is ~w", [I, heap:get(This, Heap)]),
 	{Value, Heap2} = value(I#move.value, Now, This, RSH),
 	{Regs2, Heap3} = store(I#move.target, Value, This, Regs, Heap2),
 	debug:clear_context(line_no),
@@ -65,9 +65,9 @@ analyze_instruction(#order{line_no=LN}=I, _Now, This, {Regs, Sched, Heap}) ->
 	Sched2 = sched:new_edge(Lhs, Rhs, Sched),
 	debug:clear_context(line_no),
 	{Regs, Sched2, Heap};
-analyze_instruction(#intrinsic{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
+analyze_instruction(#intrinsic{line_no=LN, nth=Nth}=I, Now, This, {Regs, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
-	?f("Instruction ~w", [I]),
+	?f("Instruction ~w; regs are: ~w", [I, Regs]),
 	
 	{InValues, Heap2} = lists:mapfoldl(fun(Val, HeapAcc)->
 			value(Val, Now, This, {Regs, Sched, HeapAcc})
@@ -77,16 +77,24 @@ analyze_instruction(#intrinsic{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	),
 	
 	Name = I#intrinsic.name,
-	{Regs2, Heap3} = case erlang:function_exported(intrinsics, Name, length(InValues)+1) of
+	Result = case erlang:function_exported(intrinsics, Name, length(InValues)+4) of
 		true ->
-			ResultValues = apply(intrinsics, Name, [Sched|InValues]),
-			store_values(I#intrinsic.out_lhsides, ResultValues, This, {Regs, Heap2});
+			{ResSched, ResHeap, ResValues} = case apply(intrinsics, Name, [Sched, Heap2, Nth, Now | InValues]) of
+				List when is_list(List) ->
+					{Sched, Heap2, List};
+				SHV when is_tuple(SHV) ->
+					SHV;
+				Single -> 
+					{Sched, Heap2, [Single]}
+			end,
+			{Regs2, ResHeap2} = store_values(I#intrinsic.out_lhsides, ResValues, This, {Regs, ResHeap}),
+			{Regs2, ResSched, ResHeap2};
 		false ->
-			debug:fatal("Invalid intrinsic ~w with parameters [*sched*|~w] in line ~w, ~s", [Name, InValues, debug:get_context(line_no), debug:get_context(block_info)]),
+			debug:fatal("Invalid intrinsic ~w with parameters ~w in line ~w, ~s", [Name, InValues, debug:get_context(line_no), debug:get_context(block_info)]),
 			error
 	end,
 	debug:clear_context(line_no),
-	{Regs2, Sched, Heap3};
+	Result;
 analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
 	?f("Instruction ~w", [I]),
@@ -95,13 +103,15 @@ analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	
 	NewNodeID = node:split_node_id(I#schedule.nth, Now),
 	NewNode = split_node:add_closure(closure:new(BlockRef, StructLoc), split_node:new()),
+	
 	Sched2 = sched:new_node(NewNodeID, Sched),
 	Sched3 = sched:set_node_info(NewNodeID, NewNode, Sched2),
-	Sched4 = split_node:create_union_node(NewNodeID, Sched3),
+	Sched4 = sched:new_edge(Now, NewNodeID, Sched3),
+	Sched5 = split_node:create_union_node(NewNodeID, Sched4),
 	
 	{Regs2, Heap3} = store(I#schedule.target, NewNodeID, This, Regs, Heap2),
 	debug:clear_context(line_no),
-	{Regs2, Sched3, Heap3}.
+	{Regs2, Sched5, Heap3}.
 
 %****************************************	
 % Store helpers
@@ -109,13 +119,13 @@ analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 
 store_values([], [], _This, {Regs, Heap}) ->
 	{Regs, Heap};
-store_values([], _Some, _This, _RH) ->
+store_values([], _Some, _This, _RSH) ->
 	debug:fatal("Trying to store more values than available return places in line ~w, ~s", [debug:get_context(line_no), debug:get_context(block_info)]);
 store_values(_Some, [], _This, _RH) ->
 	debug:fatal("Trying to store less values than available return places in line ~w, ~s", [debug:get_context(line_no), debug:get_context(block_info)]);	
 store_values([Place|MorePlaces], [Value|MoreValues], This, {Regs, Heaps}) ->
 	store_values(MorePlaces, MoreValues, This, store(Place, Value, This, Regs, Heaps)).
-	
+		
 store(undefined, _, _, Regs, Heap) ->
 	{Regs, Heap};
 store(#reg{}=R, Value, _This, Regs, Heap) ->

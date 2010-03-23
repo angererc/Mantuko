@@ -11,14 +11,16 @@
 new() ->
 	#struct{slots=dict:new()}.
 
-set(#sym{}=Slot, #nil{}, Struct) ->	
+%note: we cannot use the whole #sym{} record because the same sym might
+% occur with different nth fields (not sure if that will stay, but that's how it is right now!)
+set(#sym{name=Slot}, #nil{}, Struct) ->	
 	?f("setting struct slot ~w to nil", [Slot]),
 	Struct#struct{slots=dict:erase(Slot, Struct#struct.slots)};
-set(#sym{}=Slot, Value, Struct) ->
+set(#sym{name=Slot}, Value, Struct) ->
 	?f("setting struct slot ~w to ~w", [Slot, Value]),
 	Struct#struct{slots=dict:store(Slot, Value, Struct#struct.slots)}.
 	
-get(#sym{}=Slot, Struct) ->
+get(#sym{name=Slot}, Struct) ->
 	case dict:find(Slot, Struct#struct.slots) of
 		{ok, Value} -> 
 			?f("getting struct slot ~w => ~w", [Slot, Value]),

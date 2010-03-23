@@ -12,7 +12,7 @@
 % @type slot_name_value() = reg() | sym() | num().
 % A value that can be used as a slot name
 
-% @type creating_value() = sym() | num() | block_ref() | new_struct() | new_array() | new_lock() | instructions:activate().
+% @type creating_value() = sym() | num() | block_ref() | new_struct() | new_array() | new_lock() | instructions:activate() | instructions:intrinsic().
 % a value that creates a new entity for the analysis such as constants and new statements
 % all those values have a block-local id (called nth) to distinguish them syntactically
 

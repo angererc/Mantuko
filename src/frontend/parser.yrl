@@ -88,13 +88,13 @@ instruction -> slot equals sched activation_lhs lparen activation_rhs rparen
 %%
 %% primitive forms: %foo v1, v2; r1 = %foo v2; r1, r2 = %foo v4
 instruction -> ident lparen opt_value_list rparen
-					: #intrinsic{line_no=line_no('$1'), name=list_to_atom(unwrap('$1')), out_lhsides=[], in_values='$3'}.
+					: #intrinsic{line_no=line_no('$1'), nth=inc(nth), name=list_to_atom(unwrap('$1')), out_lhsides=[], in_values='$3'}.
 instruction -> register equals ident lparen opt_value_list rparen
-					: #intrinsic{line_no=line_no('$2'), name=list_to_atom(unwrap('$3')), out_lhsides=['$1'], in_values='$5'}.
+					: #intrinsic{line_no=line_no('$2'), nth=inc(nth), name=list_to_atom(unwrap('$3')), out_lhsides=['$1'], in_values='$5'}.
 instruction -> slot equals ident lparen opt_value_list rparen
-					: #intrinsic{line_no=line_no('$2'), name=list_to_atom(unwrap('$3')), out_lhsides=['$1'], in_values='$5'}.
+					: #intrinsic{line_no=line_no('$2'), nth=inc(nth), name=list_to_atom(unwrap('$3')), out_lhsides=['$1'], in_values='$5'}.
 instruction -> slot_or_reg comma slot_or_register_list equals ident lparen opt_value_list rparen
-					: #intrinsic{line_no=line_no('$4'), name=list_to_atom(unwrap('$5')), out_lhsides=['$1'|'$3'], in_values='$7'}.
+					: #intrinsic{line_no=line_no('$4'), nth=inc(nth), name=list_to_atom(unwrap('$5')), out_lhsides=['$1'|'$3'], in_values='$7'}.
 
 opt_value_list -> '$empty' : [].
 opt_value_list -> value_list : '$1'.

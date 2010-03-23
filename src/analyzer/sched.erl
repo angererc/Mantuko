@@ -141,9 +141,8 @@ merge(S1, S2) ->
 					S1#sched.in_edges, 
 					S2#sched.in_edges),
 	Results = dict:merge(
-					fun(NodeID, _Res1, _Res2)-> 
-						debug:fatal("tried to merge two schedules that both contained a result for the same node ~p", [NodeID]),
-						error 
+					fun(_NodeID, Same, Same)-> 
+						Same
 					end, 
 					S1#sched.results, 
 					S2#sched.results),
