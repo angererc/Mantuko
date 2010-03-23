@@ -6,7 +6,6 @@
 -export ([new/0, new_struct/2, new_array/2, new_lock/2]).
 -export ([loc_type/1, struct_loc/2, array_loc/2, lock_loc/2]).
 -export ([get/2, set/3]).
--export ([compute_incoming_heap/2]).
 
 -record (heap, {mem=dict:new()}).
 
@@ -55,6 +54,3 @@ get(Loc, Heap) ->
 set(Loc, Obj, Heap) ->
 	?f("heap setting object at location ~s to ~s", [debug:val_to_string(Loc), debug:val_to_string(Obj)]),
 	Heap#heap{mem=dict:store(Loc, Obj, Heap#heap.mem)}.
-	
-compute_incoming_heap(_Loc, Heap) ->
-	Heap.

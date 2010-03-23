@@ -20,8 +20,8 @@ analyze(Loader, Options) ->
 	%make sure the intrinsics are loaded
 	intrinsics:module_info(),
 	%create some IDs
-	RootNodeLoc = node:root_node_id(),
-	ThisLoc = heap:struct_loc(1, RootNodeLoc),
+	RootNodeID = node:root_node_id(),
+	ThisLoc = heap:struct_loc(1, RootNodeID),
 		
 	%create a root branch node with the main block as the only option
 	RootNode = split_node:add_closure(
@@ -29,10 +29,11 @@ analyze(Loader, Options) ->
 							split_node:new()),
 	
 	%create a schedule and heap
-	Sched = sched:set_node(RootNodeLoc, RootNode, sched:new()),
-	Sched2 = split_node:create_union_node(RootNodeLoc, Sched),
+	Sched = sched:new_node(RootNodeID, sched:new_empty_schedule()),
+	Sched2 = sched:set_node_info(RootNodeID, RootNode, Sched),
+	Sched3 = split_node:create_union_node(RootNodeID, Sched2),
 	
 	Heap = heap:new_struct(ThisLoc, heap:new()),
 	
-	node:analyze(RootNodeLoc, [], Heap, Sched2, Loader).
+	node:analyze(RootNodeID, [], Heap, Sched3, Loader).
 	

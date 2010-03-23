@@ -7,6 +7,7 @@
 -export ([parent_split_node_id/1]).
 -export ([get_block_refs/2, get_struct_locs/2]).
 -export ([assert_node_id/1]).
+-export ([merge/2]).
 
 -record (split_node_id, {path}).
 -record (union_node_id, {path}).
@@ -64,3 +65,15 @@ assert_node_id(#union_node_id{}) ->
 assert_node_id(#atom_node_id{}) ->
 	ok.
 	
+merge(N1, N2) ->
+	%assert that the types are the same; this should always be the case but for reasons of sanity I do it here
+	NodeType = element(1, N1),
+	NodeType = element(1, N2),
+	case NodeType of
+		split_node ->
+			split_node_id:merge(N1, N2);
+		union_node ->
+			union_node_id:merge(N1, N2);
+		atom_node ->
+			atom_node_id:merge(N1, N2)
+	end.

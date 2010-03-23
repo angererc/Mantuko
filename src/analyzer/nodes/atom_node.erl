@@ -5,7 +5,7 @@
 -include("include/instructions.hrl").
 -include("include/values.hrl").
 
--export ([new/1, analyze/5]).
+-export ([new/1, merge/2, analyze/5]).
 -export ([get_block_ref/2, get_struct_loc/2]).
 
 -record (atom_node, {closure}).
@@ -13,18 +13,24 @@
 new(Closure) ->
 	#atom_node{closure=Closure}.
 
+merge(#atom_node{} = SameNode, SameNode) ->
+	SameNode;
+merge(Else, Other) ->
+	debug:fatal("tried to merge two atom nodes with different closures; this should never happen! ~w and ~w", [Else, Other]).
+	
 get_block_ref(MyNodeID, Sched) ->
-	#atom_node{closure=Closure} = sched:get_node(MyNodeID, Sched),
+	#atom_node{closure=Closure} = sched:get_node_info(MyNodeID, Sched),
 	closure:block_ref(Closure).
 
 get_struct_loc(MyNodeID, Sched) ->
-	#atom_node{closure=Closure} = sched:get_node(MyNodeID, Sched),
+	#atom_node{closure=Closure} = sched:get_node_info(MyNodeID, Sched),
 	closure:struct_loc(Closure).
 		
-analyze(MyNodeID, _Parents, Heap, Sched, Loader) ->
-	#atom_node{closure=Closure}=MyNode = sched:get_node(MyNodeID, Sched),
-	
-	MySched = sched:set_node(MyNodeID, MyNode, sched:new()),
+analyze(MyNodeID, _Parents, Heap, ParentSched, Loader) ->
+	#atom_node{closure=Closure} = sched:get_node_info(MyNodeID, ParentSched),
+	%TODO: for the atom node, it might be OK to just create a brand-new schedule, since we only write to it
+	%this might be a little more efficient, or not... who knows...
+	MySched = sched:new_child_schedule(ParentSched),
 	
 	#block{name=N, filename=FN, start_line=S, end_line=E, body=Body} = loader:get_block(closure:block_ref(Closure), Loader),
 	debug:set_context(block_info, lists:flatten(io_lib:format("block ~w in file ~s:~w-~w", [N, FN, S, E]))),
@@ -38,6 +44,7 @@ analyze(MyNodeID, _Parents, Heap, Sched, Loader) ->
 		Body),
 		
 	%store the result heap
+	debug:clear_context(block_info),
 	MySched3 = sched:set_result(MyNodeID, Heap2, MySched2),
 	MySched3.
 	
@@ -46,6 +53,7 @@ analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, Sched, _Heap}=RSH) ->
 	?f("Instruction ~w", [I]),
 	{Value, Heap2} = value(I#move.value, Now, This, RSH),
 	{Regs2, Heap3} = store(I#move.target, Value, This, Regs, Heap2),
+	debug:clear_context(line_no),
 	{Regs2, Sched, Heap3};
 analyze_instruction(#order{line_no=LN}=I, _Now, This, {Regs, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
@@ -55,6 +63,7 @@ analyze_instruction(#order{line_no=LN}=I, _Now, This, {Regs, Sched, Heap}) ->
 	node:assert_node_id(Lhs),
 	node:assert_node_id(Rhs),
 	Sched2 = sched:new_edge(Lhs, Rhs, Sched),
+	debug:clear_context(line_no),
 	{Regs, Sched2, Heap};
 analyze_instruction(#intrinsic{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
@@ -76,6 +85,7 @@ analyze_instruction(#intrinsic{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 			debug:fatal("Invalid intrinsic ~w with parameters [*sched*|~w] in line ~w, ~s", [Name, InValues, debug:get_context(line_no), debug:get_context(block_info)]),
 			error
 	end,
+	debug:clear_context(line_no),
 	{Regs2, Sched, Heap3};
 analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
@@ -83,12 +93,14 @@ analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	BlockRef = activation_lhs(I#schedule.block, This, Regs, Heap),
 	{StructLoc, Heap2} = activation_rhs(I#schedule.struct, Now, This, Regs, Heap),
 	
-	NewNodeLoc = node:split_node_id(I#schedule.nth, Now),
+	NewNodeID = node:split_node_id(I#schedule.nth, Now),
 	NewNode = split_node:add_closure(closure:new(BlockRef, StructLoc), split_node:new()),
-	Sched2 = sched:set_node(NewNodeLoc, NewNode, Sched),
-	Sched3 = split_node:create_union_node(NewNodeLoc, Sched2),
+	Sched2 = sched:new_node(NewNodeID, Sched),
+	Sched3 = sched:set_node_info(NewNodeID, NewNode, Sched2),
+	Sched4 = split_node:create_union_node(NewNodeID, Sched3),
 	
-	{Regs2, Heap3} = store(I#schedule.target, NewNodeLoc, This, Regs, Heap2),
+	{Regs2, Heap3} = store(I#schedule.target, NewNodeID, This, Regs, Heap2),
+	debug:clear_context(line_no),
 	{Regs2, Sched3, Heap3}.
 
 %****************************************	

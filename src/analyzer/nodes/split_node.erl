@@ -2,93 +2,113 @@
 
 -include("include/debug.hrl").
 
--export ([new/0, create_union_node/2, add_closure/2, analyze/5]).
+-export ([new/0, merge/2, create_union_node/2, add_closure/2, analyze/5]).
 -export ([get_block_refs/2, get_struct_locs/2]).
 
 -record (split_node, {closures}).
 
 new() ->
 	#split_node{closures=sets:new()}.
+
+merge(One, Other) ->
+	#split_node{closures=One#split_node.closures ++ Other#split_node.closures}.
 	
 create_union_node(SplitNodeID, Sched) ->
-	BranchOutRef = node:union_node_id(SplitNodeID),
-	BranchOutNode = union_node:new(),
-	Sched2 = sched:set_node(BranchOutRef, BranchOutNode, Sched),
-	Sched3 = sched:new_edge(SplitNodeID, BranchOutRef, Sched2),
-	Sched3.
+	UnionNodeID = node:union_node_id(SplitNodeID),
+	UnionNode = union_node:new(),
+	Sched2 = sched:new_node(UnionNodeID, Sched),
+	Sched3 = sched:set_node_info(UnionNodeID, UnionNode, Sched2),
+	Sched4 = sched:new_edge(SplitNodeID, UnionNodeID, Sched3),
+	Sched4.
 	
 add_closure(Closure, #split_node{closures=Closures}=Node) ->
 	Node#split_node{closures=sets:add_element(Closure, Closures)}.
 	
-analyze(MyNodeID, Parents, Heap, Sched, Loader) ->
-	#split_node{closures=Closures} = sched:get_node(MyNodeID, Sched),
-	%store the incoming heap
-	Sched2 = sched:set_result(MyNodeID, Heap, Sched),
-	case check_for_loop(Closures, Parents, Sched) of
+analyze(MyNodeID, Parents, Heap, ParentSched, Loader) ->
+	#split_node{closures=Closures} = sched:get_node_info(MyNodeID, ParentSched),
+	MySched = sched:new_child_schedule(ParentSched),
+	case check_for_loop(Closures, Parents, MySched) of
 		{true, _Parent} ->
 			loop_found;
 		false ->
-			Sched3 = create_nodes(MyNodeID, Closures, Sched2),
-			analyze_till_fixed_point([MyNodeID|Parents], Heap, Sched3, Loader)
+			%store the incoming heap
+			MySched = sched:new_child_schedule(ParentSched),
+			MySched2 = sched:set_result(MyNodeID, Heap, MySched),
+			MySched3 = create_nodes(MyNodeID, Closures, MySched2),
+			analyze_till_fixed_point([MyNodeID|Parents], MySched3, Loader)
 	end.
 
-create_nodes(MyNodeID, Closures, Sched)	->
+create_nodes(MyNodeID, Closures, MySched)	->
 	sets:fold( %create a node for each closure and add the edges
 		fun(Closure, SchedAcc)-> 
 			NewNodeID = node:atom_node_id(Closure, MyNodeID),
 			NewNode = atom_node:new(Closure),
-			SchedAcc2 = sched:set_node(NewNodeID, NewNode, SchedAcc),
+			SchedAcc2 = sched:new_node(NewNodeID, SchedAcc),
+			SchedAcc3 = sched:set_node_info(NewNodeID, NewNode, SchedAcc2),
 			% this branch node created the new activation
-			SchedAcc3 = sched:new_edge(MyNodeID, NewNodeID, SchedAcc2),
+			SchedAcc4 = sched:new_edge(MyNodeID, NewNodeID, SchedAcc3),
 			% add a happens-before between the new activation and our branch_out node
 			%the branch out node has been created before when this branch node has been created
-			SchedAcc4 = sched:new_edge(
+			SchedAcc5 = sched:new_edge(
 							NewNodeID, 
 							node:union_node_id(MyNodeID),
-							SchedAcc3),
+							SchedAcc4),
 			%and continue with the next option
-			SchedAcc4
+			SchedAcc5
 		end, 
-		Sched, Closures).
+		MySched, 
+		Closures).
 
 get_block_refs(MyNodeID, Sched) ->
-	#split_node{closures=Closures} = sched:get_node(MyNodeID, Sched),
+	#split_node{closures=Closures} = sched:get_node_info(MyNodeID, Sched),
 	closure:extract_blocks(Closures).
 	
 get_struct_locs(MyNodeID, Sched) ->
-	#split_node{closures=Closures} = sched:get_node(MyNodeID, Sched),
+	#split_node{closures=Closures} = sched:get_node_info(MyNodeID, Sched),
 	closure:extract_structs(Closures).
 		
-analyze_till_fixed_point(Parents, Heap, Sched, Loader) ->
+analyze_till_fixed_point(Parents, MySched, Loader) ->
 	%since initially, I get the old schedule here, the find_schedulable_nodes
 	%will find nodes from my parent that might look schedulable but are not my business.
 	%I probably want to keep the parent schedule out of this... or only use the
 	%already analyzed ones, but not the open ones...
-	case sched:get_schedulable_nodes(Sched) of
+	case sched:get_schedulable_nodes(MySched) of
 		[] -> 
-			Open = sched:get_open_nodes(Sched),
-			?f("finished analyzing open nodes; ~w are still open: ~w", [length(Open), Open]),
-			Sched; %we are done, return to the split node that called us
+			NewNodes = sched:get_new_nodes(MySched),
+			?f("finished analyzing schedulable nodes; ~w are still open: ~w", [length(NewNodes), NewNodes]),
+			MySched; %we are done, return to the split node that called us
 		Schedulable ->
 			?f("found ~w schedulable nodes: ~w", [length(Schedulable), Schedulable]),
-			analyze_schedulable_nodes(Schedulable, Parents, Heap, Sched, Loader)
+			analyze_schedulable_nodes(Schedulable, Parents, MySched, Loader)
 	end.
 	
-analyze_schedulable_nodes(Schedulable, Parents, Heap, Sched, Loader) ->
-	ChildSchedules = lists:map(fun(ChildNodeID)->
-			ChildHeap = heap:compute_incoming_heap(ChildNodeID, Heap),
+analyze_schedulable_nodes(Schedulable, Parents, MySched, Loader) ->
+	%
+	ChildSchedules = lists:map(
+		fun(ChildNodeID)->
+			ChildHeap = sched:compute_incoming_heap(ChildNodeID, MySched),
 			%every node can be analyzed starting from our schedule; they cannot influence each other!
-			ChildSched = node:analyze(ChildNodeID, Parents, ChildHeap, Sched, Loader),
+			% is that true? needs a proof or something...
+			ChildSched = node:analyze(ChildNodeID, Parents, ChildHeap, MySched, Loader),
 			ChildSched
 		end,
 		Schedulable),
-	FoldedSched = lists:foldl(fun(ChildSched, Acc)-> sched:merge(Acc, ChildSched) end, Sched, ChildSchedules),
-	analyze_till_fixed_point(Parents, Heap, FoldedSched, Loader).
+	FoldedSched = lists:foldl(
+		fun(ChildSched, Acc)-> 
+			sched:merge(Acc, ChildSched) 
+		end,
+		%here we use a new schedule because we want to get rid of our old understanding of what are "new" nodes 
+		%that is, we want to start with an empty new_nodes list in the schedule
+		%currently, since a child starts with our schedule, each child already contains all the stuff from us
+		%so we sould even start with an empty schedule... let's do that!
+		sched:new_empty_schedule(), 
+		ChildSchedules),
+	analyze_till_fixed_point(Parents, FoldedSched, Loader).
 	
 check_for_loop(_MyClosures, [], _Sched) ->
 	false;
 check_for_loop(MyClosures, [Parent|Grandpa], Sched) ->
-	#split_node{closures=ParentClosures} = sched:get_node(Parent, Sched),
+	#split_node{closures=ParentClosures} = sched:get_node_info(Parent, Sched),
 	MyActivationBlocks = closure:extract_blocks(MyClosures),
 	ParentActivationBlocks = closure:extract_blocks(ParentClosures),
 	case sets:size(sets:intersection(MyActivationBlocks, ParentActivationBlocks)) of
