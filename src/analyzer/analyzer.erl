@@ -21,7 +21,7 @@ analyze(Loader, Options) ->
 	intrinsics:module_info(),
 	%create some IDs
 	RootNodeID = node:root_node_id(),
-	ThisLoc = heap:struct_loc(1, RootNodeID),
+	ThisLoc = object:struct_loc(1, RootNodeID),
 		
 	%create a root branch node with the main block as the only option
 	RootNode = split_node:add_closure(

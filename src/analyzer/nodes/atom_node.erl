@@ -48,10 +48,10 @@ analyze(MyNodeID, _Parents, Heap, ParentSched, Loader) ->
 	MySched3 = sched:set_result(MyNodeID, Heap2, MySched2),
 	MySched3.
 	
-analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, Sched, Heap}=RSH) ->
+analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, Sched, _Heap}=RSH) ->
 	debug:set_context(line_no, LN),
-	?f("Instruction ~w; this is ~w", [I, heap:get(This, Heap)]),
 	{Value, Heap2} = value(I#move.value, Now, This, RSH),
+	?f("Instruction ~w; value to store is ~w", [I, Value]),
 	{Regs2, Heap3} = store(I#move.target, Value, This, Regs, Heap2),
 	debug:clear_context(line_no),
 	{Regs2, Sched, Heap3};
@@ -124,11 +124,11 @@ store(undefined, _, _, Regs, Heap) ->
 store(#reg{}=R, Value, _This, Regs, Heap) ->
 	{dict:store(R, Value, Regs), Heap};
 store(#slot{context=C, slot=S}, Value, This, Regs, Heap) ->
-	StructLoc = struct_loc(C, This, Regs),
+	ObjectLoc = object_loc(C, This, Regs),
 	SlotName = slot_name(S, Regs),
-	Struct = heap:get(StructLoc, Heap),
-	Struct2 = struct:set(SlotName, Value, Struct),
-	Heap2 = heap:set(StructLoc, Struct2, Heap),
+	Object = heap:get(ObjectLoc, Heap),
+	Object2 = object:set(SlotName, Value, Object),
+	Heap2 = heap:set(ObjectLoc, Object2, Heap),
 	{Regs, Heap2}.
 	
 %****************************************
@@ -163,7 +163,7 @@ activation_lhs(SlotOrReg, This, Regs, Heap) ->
 activation_rhs(#this{}, _Now, This, _Regs, Heap) ->
 	{This, Heap};
 activation_rhs(#new_struct{nth=Nth}, Now, _This, _Regs, Heap) ->
-	NewLoc = heap:struct_loc(Nth, Now),
+	NewLoc = object:struct_loc(Nth, Now),
 	Heap2 = heap:new_struct(NewLoc, Heap),
 	{NewLoc, Heap2};
 activation_rhs(SlotOrReg, _Now, This, Regs, Heap) ->
@@ -179,15 +179,15 @@ value(#block_ref{}=V, _Now, _This, {_Regs, _Sched, Heap}) ->
 value(#this{}, _Now, This, {_Regs, _Sched, Heap}) ->
 	{This, Heap};
 value(#new_struct{nth=Nth}, Now, _This, {_Regs, _Sched, Heap}) ->
-	NewLoc = heap:struct_loc(Nth, Now),
+	NewLoc = object:struct_loc(Nth, Now),
 	Heap2 = heap:new_struct(NewLoc, Heap),
 	{NewLoc, Heap2};
 value(#new_array{nth=Nth}, Now, _This, {_Regs, _Sched, Heap}) ->
-	NewLoc = heap:array_loc(Nth, Now),
+	NewLoc = object:array_loc(Nth, Now),
 	Heap2 = heap:new_array(NewLoc, Heap),
 	{NewLoc, Heap2};
 value(#new_lock{nth=Nth}, Now, _This, {_Regs, _Sched, Heap}) ->
-	NewLoc = heap:lock_loc(Nth, Now),
+	NewLoc = object:lock_loc(Nth, Now),
 	Heap2 = heap:new_lock(NewLoc, Heap),
 	{NewLoc, Heap2};
 value(#nil{}=V, _Now, _This, {_Regs, _Sched, Heap}) ->
@@ -212,9 +212,9 @@ slot_name(#sym{}=V, _) ->
 slot_name(#reg{}=V, Regs) ->
 	reg(V, Regs).
 
-struct_loc(#reg{}=V, _This, Regs) ->
+object_loc(#reg{}=V, _This, Regs) ->
 	reg(V, Regs);
-struct_loc(#this{}, This, _Regs) ->
+object_loc(#this{}, This, _Regs) ->
 	This.
 	
 activation_value(#now{}, Now, _This, _Regs, _Heap) ->
@@ -223,9 +223,9 @@ activation_value(SlotOrReg, _Now, This, Regs, Heap) ->
 	slot_or_register(SlotOrReg, This, Regs, Heap).
 	
 slot_or_register(#slot{context=C, slot=S}, This, Regs, Heap) ->
-	StructLoc = struct_loc(C, This, Regs),
+	ObjectLoc = object_loc(C, This, Regs),
 	SlotName = slot_name(S, Regs),
-	Struct = heap:get(StructLoc, Heap),
-	struct:get(SlotName, Struct);
+	Object = heap:get(ObjectLoc, Heap),
+	object:get(SlotName, Object);
 slot_or_register(#reg{}=V, _This, Regs, _Heap) ->
 	reg(V, Regs).

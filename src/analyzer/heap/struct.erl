@@ -4,12 +4,18 @@
 -include("include/debug.hrl").
 
 -export ([new/0]).
+-export ([is_struct/1]).
 -export ([set/3, get/2]).
 
 -record (struct, {slots}).
 
 new() ->
 	#struct{slots=dict:new()}.
+	
+is_struct(#struct{}) ->
+	true;
+is_struct(_Else) ->
+	false.
 
 %note: we cannot use the whole #sym{} record because the same sym might
 % occur with different nth fields (not sure if that will stay, but that's how it is right now!)

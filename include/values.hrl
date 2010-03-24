@@ -1,6 +1,6 @@
 % @type value() = runtime_value() | abstract_value() | compiletime_value().
 
-% @type runtime_value() = heap:struct_loc() | heap:array_loc() | heap:lock_loc() | heap:activation_loc() | nil_() | num() | sym() | block_ref().
+% @type runtime_value() = object:struct_loc() | object:array_loc() | object:lock_loc() | heap:activation_loc() | nil_() | num() | sym() | block_ref().
 % those values are available during runtime, a.k.a. immediates.
 
 % @type abstract_value() = any_() | some() | option().
