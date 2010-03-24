@@ -45,6 +45,13 @@
 % A set of concrete values of the given type.
 -record (one_of, {type, value_set}).
 
+%a transformed value is a primitive immutable value (number etc) that is transformed by an operation
+%such as inc or plus 32 or something
+%type is for example num or sym
+%it contains the Nth and the Activation Node where that transformation happened
+%the parent value is either another transformed value of the same type or a value
+-record (transformed_value, {type, nth, node_id, parent_value, operation}).
+
 % *****************************
 % immediate values
 % *****************************
@@ -53,13 +60,13 @@
 % 	Name = atom().
 % A symbol
 % Example: <pre>'symname</pre>
--record (sym, {nth, name}).
+-record (sym, {name}).
 
 % @type num(Value)
 %	Value = integer() | float().
 % A nummeric value
 % Example: <pre>42</pre>
--record (num, {nth, value}).
+-record (num, {value}).
 
 % @type block_ref(Nth, Name)
 % 	Nth = integer(),

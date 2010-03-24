@@ -27,7 +27,7 @@ array_loc(Nth, ActLoc) when is_integer(Nth) ->
 	
 lock_loc(Nth, ActLoc) when is_integer(Nth) ->
 	#lock_loc{nth=Nth, act_loc=ActLoc}.
-
+	
 % ***********************************************
 % ***********************************************
 new() ->

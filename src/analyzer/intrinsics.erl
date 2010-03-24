@@ -5,14 +5,24 @@
 
 -compile(export_all).
 
-% intrinsics can return:
-% a list of results, a single result,
-% or a tuple with the updated schedule and heap and a list of results
-geq(_Sched, _Heap, _Nth, _Now, #num{value=Lhs}, #num{value=Rhs}) ->
-	if
-		Lhs >= Rhs -> true;
-		true -> false
-	end.
+% intrinsics must return:
+% a tuple with the updated schedule and heap and a list of results
+% -> {Sched2, Heap2, [ResultValues]}
+geq(Sched, Heap, _Nth, _Now, #num{}=_LHS, #num{}=_RHS) ->
+	{Sched, Heap, [#some{type=boolean}]}.
+	
+inc(Sched, Heap, Nth, Now, #num{}=Parent) ->
+	{Sched, Heap, [#transformed_value{type=num, 
+										nth=Nth, 
+										node_id=Now,
+										parent_value=Parent, 
+										operation={plus, 1}}]};
+inc(Sched, Heap, Nth, Now, #transformed_value{type=num}=Parent) ->
+	{Sched, Heap, [#transformed_value{type=num, 
+										nth=Nth, 
+										node_id=Now,
+										parent_value=Parent, 
+										operation={plus, 1}}]}.
 	
 branch(Sched, Heap, Nth, Now, _Test, FalseBlockRef, FalseStructLoc, TrueBlockRef, TrueStructLoc) ->
 	TrueClause = closure:new(TrueBlockRef, TrueStructLoc),

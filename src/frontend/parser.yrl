@@ -145,8 +145,8 @@ slot_or_reg -> slot : '$1'.
 
 slot -> struct_loc lsquare slot_name rsquare : #slot{context='$1', slot='$3'}.
 register -> reg_ident : #reg{name=list_to_atom(lists:nthtail(1,unwrap('$1')))}.
-symbol -> sym_ident : #sym{nth=inc(nth), name=list_to_atom(lists:nthtail(1, unwrap('$1')))}.
-number -> num : #num{nth=inc(nth), value=nummeric_value_from_string_token('$1')}.
+symbol -> sym_ident : #sym{name=list_to_atom(lists:nthtail(1, unwrap('$1')))}.
+number -> num : #num{value=nummeric_value_from_string_token('$1')}.
 
 %%
 %% ACTIVATIONS

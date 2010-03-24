@@ -79,14 +79,7 @@ analyze_instruction(#intrinsic{line_no=LN, nth=Nth}=I, Now, This, {Regs, Sched, 
 	Name = I#intrinsic.name,
 	Result = case erlang:function_exported(intrinsics, Name, length(InValues)+4) of
 		true ->
-			{ResSched, ResHeap, ResValues} = case apply(intrinsics, Name, [Sched, Heap2, Nth, Now | InValues]) of
-				List when is_list(List) ->
-					{Sched, Heap2, List};
-				SHV when is_tuple(SHV) ->
-					SHV;
-				Single -> 
-					{Sched, Heap2, [Single]}
-			end,
+			{ResSched, ResHeap, ResValues} = apply(intrinsics, Name, [Sched, Heap2, Nth, Now | InValues]),
 			{Regs2, ResHeap2} = store_values(I#intrinsic.out_lhsides, ResValues, This, {Regs, ResHeap}),
 			{Regs2, ResSched, ResHeap2};
 		false ->
