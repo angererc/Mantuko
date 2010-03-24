@@ -18,13 +18,14 @@ create_union_node(SplitNodeID, Sched) ->
 	UnionNode = union_node:new(),
 	Sched2 = sched:new_node(UnionNodeID, Sched),
 	Sched3 = sched:set_node_info(UnionNodeID, UnionNode, Sched2),
-	Sched4 = sched:new_edge(SplitNodeID, UnionNodeID, Sched3),
+	Sched4 = sched:new_edge_no_smartness(SplitNodeID, UnionNodeID, Sched3),
 	Sched4.
 	
 add_closure(Closure, #split_node{closures=Closures}=Node) ->
 	Node#split_node{closures=sets:add_element(Closure, Closures)}.
 	
 analyze(MyNodeID, Parents, Heap, ParentSched, Loader) ->
+	?f("analyzing node ~s", [pretty:string(MyNodeID)]),
 	#split_node{closures=Closures} = sched:get_node_info(MyNodeID, ParentSched),
 	MySched = sched:new_child_schedule(ParentSched),
 	case check_for_loop(Closures, Parents, MySched) of
@@ -32,10 +33,9 @@ analyze(MyNodeID, Parents, Heap, ParentSched, Loader) ->
 			loop_found;
 		false ->
 			%store the incoming heap
-			MySched = sched:new_child_schedule(ParentSched),
 			MySched2 = sched:set_result(MyNodeID, Heap, MySched),
 			MySched3 = create_nodes(MyNodeID, Closures, MySched2),
-			analyze_till_fixed_point([MyNodeID|Parents], MySched3, Loader)
+			analyze_till_fixed_point(MyNodeID, [MyNodeID|Parents], MySched3, Loader)
 	end.
 
 create_nodes(MyNodeID, Closures, MySched)	->
@@ -46,7 +46,7 @@ create_nodes(MyNodeID, Closures, MySched)	->
 			SchedAcc2 = sched:new_node(NewNodeID, SchedAcc),
 			SchedAcc3 = sched:set_node_info(NewNodeID, NewNode, SchedAcc2),
 			% this branch node created the new activation
-			SchedAcc4 = sched:new_edge(MyNodeID, NewNodeID, SchedAcc3),
+			SchedAcc4 = sched:new_edge_no_smartness(MyNodeID, NewNodeID, SchedAcc3),
 			% add a happens-before between the new activation and our branch_out node
 			%the branch out node has been created before when this branch node has been created
 			SchedAcc5 = sched:new_edge(
@@ -67,7 +67,8 @@ get_struct_locs(MyNodeID, Sched) ->
 	#split_node{closures=Closures} = sched:get_node_info(MyNodeID, Sched),
 	closure:extract_structs(Closures).
 		
-analyze_till_fixed_point(Parents, MySched, Loader) ->
+analyze_till_fixed_point(MyNodeID, Parents, MySched, Loader) ->
+	?f("node ~s analyze_till_fixed_point", [pretty:string(MyNodeID)]),
 	%since initially, I get the old schedule here, the find_schedulable_nodes
 	%will find nodes from my parent that might look schedulable but are not my business.
 	%I probably want to keep the parent schedule out of this... or only use the
@@ -78,11 +79,12 @@ analyze_till_fixed_point(Parents, MySched, Loader) ->
 			?f("finished analyzing schedulable nodes; ~w are still open: ~w", [length(NewNodes), NewNodes]),
 			MySched; %we are done, return to the split node that called us
 		Schedulable ->
-			?f("found ~w schedulable nodes: ~w", [length(Schedulable), Schedulable]),
-			analyze_schedulable_nodes(Schedulable, Parents, MySched, Loader)
+			?f("found ~w schedulable nodes: ~s", [length(Schedulable), pretty:string(Schedulable)]),
+			analyze_schedulable_nodes(MyNodeID, Schedulable, Parents, MySched, Loader)
 	end.
 	
-analyze_schedulable_nodes(Schedulable, Parents, MySched, Loader) ->
+analyze_schedulable_nodes(MyNodeID, Schedulable, Parents, MySched, Loader) ->
+	?f("node ~s analyze_schedulable_nodes", [pretty:string(MyNodeID)]),
 	%
 	ChildSchedules = lists:map(
 		fun(ChildNodeID)->
@@ -100,7 +102,7 @@ analyze_schedulable_nodes(Schedulable, Parents, MySched, Loader) ->
 		%first, remove all the nodes that we just computed
 		sched:remove_new_nodes(Schedulable, MySched), 
 		ChildSchedules),
-	analyze_till_fixed_point(Parents, FoldedSched, Loader).
+	analyze_till_fixed_point(MyNodeID, Parents, FoldedSched, Loader).
 	
 check_for_loop(_MyClosures, [], _Sched) ->
 	false;

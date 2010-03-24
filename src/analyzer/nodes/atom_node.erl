@@ -34,7 +34,7 @@ analyze(MyNodeID, _Parents, Heap, ParentSched, Loader) ->
 	
 	#block{name=N, filename=FN, start_line=S, end_line=E, body=Body} = loader:get_block(closure:block_ref(Closure), Loader),
 	debug:set_context(block_info, lists:flatten(io_lib:format("block ~w in file ~s:~w-~w", [N, FN, S, E]))),
-	?f("analyzing block ~w", [element(3,closure:block_ref(Closure))]),
+	?f("analyzing node ~s, block ~w", [pretty:string(MyNodeID), element(3,closure:block_ref(Closure))]),
 	
 	This = closure:struct_loc(Closure),
 	{_Regs, MySched2, Heap2} = lists:foldl(fun(Instruction, Acc)->

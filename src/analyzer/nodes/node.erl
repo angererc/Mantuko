@@ -5,6 +5,7 @@
 -export ([analyze/5]).
 -export ([root_node_id/0, exit_node_id/0, split_node_id/2, union_node_id/1, atom_node_id/2]).
 -export ([parent_split_node_id/1]).
+-export ([node_as_edge_source/1]).
 -export ([get_block_refs/2, get_struct_locs/2]).
 -export ([assert_node_id/1]).
 -export ([merge/2]).
@@ -37,6 +38,15 @@ get_struct_locs(#union_node_id{}=Loc, Sched) ->
 	split_node:get_struct_locs(parent_split_node_id(Loc), Sched);
 get_struct_locs(#atom_node_id{}=Loc, Sched) ->
 	atom_node:get_struct_loc(Loc, Sched), sets:new().
+
+% for a split node it returns the union node ID
+node_as_edge_source(#split_node_id{}=ID) ->
+	union_node_id(ID);
+node_as_edge_source(#union_node_id{}=ID) ->
+	?f("union nodes shouldn't be out there as references! ~s (i think)", [pretty:string(ID)]),
+	error;
+node_as_edge_source(Else) ->
+	Else.
 		
 root_node_id() ->
 	#split_node_id{path=[]}.

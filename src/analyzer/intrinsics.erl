@@ -14,16 +14,15 @@ geq(_Sched, _Heap, _Nth, _Now, #num{value=Lhs}, #num{value=Rhs}) ->
 		true -> false
 	end.
 	
-branch(Sched, Heap, Nth, Now, Test, FalseBlockRef, FalseStructLoc, TrueBlockRef, TrueStructLoc) ->
-	Closure = case Test of
-		true -> closure:new(TrueBlockRef, TrueStructLoc);
-		false -> closure:new(FalseBlockRef, FalseStructLoc)
-	end,
+branch(Sched, Heap, Nth, Now, _Test, FalseBlockRef, FalseStructLoc, TrueBlockRef, TrueStructLoc) ->
+	TrueClause = closure:new(TrueBlockRef, TrueStructLoc),
+	FalseClause = closure:new(FalseBlockRef, FalseStructLoc),
 	
 	NewNodeID = node:split_node_id(Nth, Now),
-	NewNode = split_node:add_closure(Closure, split_node:new()),
+	NewNode = split_node:add_closure(FalseClause, split_node:add_closure(TrueClause, split_node:new())),
 	Sched2 = sched:new_node(NewNodeID, Sched),
 	Sched3 = sched:set_node_info(NewNodeID, NewNode, Sched2),
-	Sched4 = sched:new_edge(Now, NewNodeID, Sched3),
+	Sched4 = split_node:create_union_node(NewNodeID, Sched3),
+	Sched5 = sched:new_edge(Now, NewNodeID, Sched4),
 	
-	{Sched4, Heap, [NewNodeID]}.
+	{Sched5, Heap, [NewNodeID]}.

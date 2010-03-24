@@ -3,7 +3,7 @@
 -include("include/debug.hrl").
 
 -export ([new_empty_schedule/0, new_child_schedule/1]).
--export ([new_edge/3, new_node/2, is_new_node/2]).
+-export ([new_edge/3, new_edge_no_smartness/3, new_node/2, is_new_node/2]).
 -export ([remove_new_nodes/2]).
 -export ([set_node_info/3, get_node_info/2, has_node_info/2, has_result/2, set_result/3, get_result/2]).
 -export ([get_schedulable_nodes/1, get_new_nodes/1, is_schedulable/2]).
@@ -33,13 +33,23 @@ assert_invariants(Sched) ->
 	% we have infos about all nodes used in new_nodes, in_edges, results
 	AllUsedNodes = Sched#sched.new_nodes ++ dict:fetch_keys(Sched#sched.results) ++ dict:fetch_keys(Sched#sched.in_edges),
 	AllUsedNodes2 = dict:fold(fun(_, Sources, Acc)-> Sources ++ Acc end, AllUsedNodes, Sched#sched.in_edges),
-	true = lists:all(fun(Node)-> dict:is_key(Node, Sched#sched.node_infos) end, AllUsedNodes2),
+	case lists:all(fun(Node)-> dict:is_key(Node, Sched#sched.node_infos) end, AllUsedNodes2) of
+		true -> ok;
+		false ->
+			?f("sched assertion failed: not all used nodes have a corresponding info: used=~s, defined=~s", 
+				[pretty:string(lists:sort(sets:to_list(sets:from_list(AllUsedNodes2)))), 
+				 pretty:string(lists:sort(dict:fetch_keys(Sched#sched.node_infos)))])
+	end,
 	Sched.
-			
-new_edge(SourceNodeID, TargetNodeID, Sched) ->
+
+new_edge_no_smartness(SourceNodeID, TargetNodeID, Sched) ->
+	?f("adding edge ~s -> ~s", [pretty:string(SourceNodeID), pretty:string(TargetNodeID)]),
 	assert_invariants(
 		Sched#sched{in_edges=dict:append(TargetNodeID, SourceNodeID, Sched#sched.in_edges)}
 	).
+				
+new_edge(SourceNodeID, TargetNodeID, Sched) ->
+	new_edge_no_smartness(node:node_as_edge_source(SourceNodeID), TargetNodeID, Sched).
 
 new_node(NodeID, Sched) ->
 	false = has_result(NodeID, Sched),
