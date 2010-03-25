@@ -88,6 +88,14 @@ is_schedulable(NodeID, Sched) ->
 	%if we have a result for every incoming node, we are good to go...
 	lists:all(fun(InNode)-> has_result(InNode, Sched) end, IncomingNodes).
 
+% -> same | concurrent | exclusive | left_hb_right | right_hb_left
+%get_relationship(SameNodeID, SameNodeID, _Sched) ->
+%	same;
+%get_relationship(NodeID1, NodeID2, Sched) ->
+%	?!? do something here..
+	% if the common parent is a split node, we are exclusive
+	% if not, search for a path
+	
 % all from get_new_nodes wher is_schedulable is true	
 % -> {[SchedulableNodeIDs], [NotSchedulable]}
 separate_schedulable_nodes(Worklist, Sched) ->
