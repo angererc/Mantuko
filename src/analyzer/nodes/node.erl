@@ -4,12 +4,12 @@
 
 -export ([analyze/5]).
 -export ([root_node_id/0, exit_node_id/0, split_node_id/2, union_node_id/1, atom_node_id/2]).
--export ([parent_split_node_id/1]).
+-export ([parent_split_node_id/1, is_split_node_id/1]).
 -export ([node_as_edge_source/1]).
 -export ([get_block_refs/2, get_struct_locs/2]).
 -export ([assert_node_id/1]).
 -export ([merge/2]).
--export ([get_common_ancestor/2]).
+-export ([find_common_ancestor/2, creation_tree_depth/1]).
 
 -record (split_node_id, {path}).
 -record (union_node_id, {path}).
@@ -23,13 +23,21 @@ find_parent([_Head1|Tail1], [_Head2|Tail2]) ->
 	
 %walt up the creation tree and find the common ancestor
 % (NodeID1, NodeID2) -> NodeID3
-get_common_ancestor({_, Path1}, {_, Path2}) ->
+find_common_ancestor({_, Path1}, {_, Path2}) ->
 	Len1 = length(Path1),
 	Len2 = length(Path2),
 	%cut the longer path to the size of the shorter one
 	find_parent(
 		lists:nthtail(erlang:max(0, Len1-Len2), Path1), 
 		lists:nthtail(erlang:max(0, Len2-Len1), Path2)).
+	
+creation_tree_depth({_, Path}) ->
+	length(Path).
+	
+is_split_node_id(#split_node_id{}) ->
+	true;
+is_split_node_id(_Else) ->
+	false.
 	
 % faking some virtual method call and inheritance here
 % -> {[NewNodes], [LoopMarkers], sched()}

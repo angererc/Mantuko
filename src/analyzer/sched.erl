@@ -9,6 +9,7 @@
 -export ([separate_schedulable_nodes/2, is_schedulable/2]).
 -export ([in_neighbours/2, plus/2]).
 -export ([compute_incoming_heap/2]).
+-export ([happens_before/3, get_relationship/3]).
 
 -record (sched, {node_infos, in_edges, results}).
 
@@ -89,12 +90,30 @@ is_schedulable(NodeID, Sched) ->
 	lists:all(fun(InNode)-> has_result(InNode, Sched) end, IncomingNodes).
 
 % -> same | concurrent | exclusive | left_hb_right | right_hb_left
-%get_relationship(SameNodeID, SameNodeID, _Sched) ->
-%	same;
-%get_relationship(NodeID1, NodeID2, Sched) ->
-%	?!? do something here..
-	% if the common parent is a split node, we are exclusive
-	% if not, search for a path
+get_relationship(SameNodeID, SameNodeID, _Sched) ->
+	same;
+get_relationship(NodeID1, NodeID2, Sched) ->
+	Ancestor = node:find_common_ancestor(NodeID1, NodeID2),
+	case node:is_split_node_id(Ancestor) of
+		true ->
+			exclusive;
+		false ->
+			Test = fun(LHS, RHS, LHSLabel, RHSLabel) ->
+				case happens_before(LHS, RHS, Sched) of
+						true -> LHSLabel;
+						false -> case happens_before(RHS, LHS, Sched) of
+								true -> RHSLabel;
+								false -> concurrent
+						end
+				end
+			end,
+			Len1 = node:creation_tree_depth(NodeID1),
+			Len2 = node:creation_tree_depth(NodeID1),
+			if
+				Len1 =< Len2 -> Test(NodeID1, NodeID2, left_hb_right, right_hb_left);
+				Len1 > Len2 -> Test(NodeID2, NodeID1, right_hb_left, left_hb_right)
+			end
+	end.
 	
 % all from get_new_nodes wher is_schedulable is true	
 % -> {[SchedulableNodeIDs], [NotSchedulable]}
