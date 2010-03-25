@@ -5,19 +5,20 @@
 
 -compile(export_all).
 
+is_nummeric(#num{}) -> true;
+is_nummeric(#transformed_value{type=num}) -> true;
+is_nummeric(_Else) -> false.
+
 % intrinsics must return:
 % a tuple with the updated schedule and heap and a list of results
 % -> {Sched2, Heap2, [ResultValues]}
-geq(Sched, Heap, _Nth, _Now, #num{}=_LHS, #num{}=_RHS) ->
+geq(Sched, Heap, _Nth, _Now, LHS, RHS) ->
+	true = is_nummeric(LHS),
+	true = is_nummeric(RHS),
 	{Sched, Heap, [#some{type=boolean}]}.
 	
-inc(Sched, Heap, Nth, Now, #num{}=Parent) ->
-	{Sched, Heap, [#transformed_value{type=num, 
-										nth=Nth, 
-										node_id=Now,
-										parent_value=Parent, 
-										operation={plus, 1}}]};
-inc(Sched, Heap, Nth, Now, #transformed_value{type=num}=Parent) ->
+inc(Sched, Heap, Nth, Now, Parent) ->
+	true = is_nummeric(Parent),
 	{Sched, Heap, [#transformed_value{type=num, 
 										nth=Nth, 
 										node_id=Now,

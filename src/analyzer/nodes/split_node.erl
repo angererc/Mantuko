@@ -69,6 +69,7 @@ get_struct_locs(MyNodeID, Sched) ->
 		
 analyze_till_fixed_point(MyNodeID, Parents, MySched, Loader) ->
 	?f("node ~s analyze_till_fixed_point", [pretty:string(MyNodeID)]),
+	timer:sleep(10),
 	%since initially, I get the old schedule here, the find_schedulable_nodes
 	%will find nodes from my parent that might look schedulable but are not my business.
 	%I probably want to keep the parent schedule out of this... or only use the
@@ -85,6 +86,7 @@ analyze_till_fixed_point(MyNodeID, Parents, MySched, Loader) ->
 	
 analyze_schedulable_nodes(MyNodeID, Schedulable, Parents, MySched, Loader) ->
 	?f("node ~s analyze_schedulable_nodes", [pretty:string(MyNodeID)]),
+	timer:sleep(10),
 	%
 	ChildSchedules = lists:map(
 		fun(ChildNodeID)->
