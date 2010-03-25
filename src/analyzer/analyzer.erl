@@ -29,11 +29,11 @@ analyze(Loader, Options) ->
 							split_node:new()),
 	
 	%create a schedule and heap
-	Sched = sched:new_node(RootNodeID, sched:new_empty_schedule()),
-	Sched2 = sched:set_node_info(RootNodeID, RootNode, Sched),
-	Sched3 = split_node:create_union_node(RootNodeID, Sched2),
+	Sched = sched:set_node_info(RootNodeID, RootNode, sched:new_empty_schedule()),
+	{ExitNode, Sched2} = split_node:create_union_node(RootNodeID, Sched),
 	
 	Heap = heap:new_struct(ThisLoc, heap:new()),
 	
-	node:analyze(RootNodeID, [], Heap, Sched3, Loader).
+	node:analyze(RootNodeID, [], Heap, Sched2, Loader),
+	node:analyze(ExitNode).
 	

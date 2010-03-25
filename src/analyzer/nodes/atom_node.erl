@@ -5,7 +5,7 @@
 -include("include/instructions.hrl").
 -include("include/values.hrl").
 
--export ([new/1, merge/2, analyze/5]).
+-export ([new/1, merge/2, analyze/4]).
 -export ([get_block_ref/2, get_struct_loc/2]).
 
 -record (atom_node, {closure}).
@@ -26,36 +26,33 @@ get_struct_loc(MyNodeID, Sched) ->
 	#atom_node{closure=Closure} = sched:get_node_info(MyNodeID, Sched),
 	closure:struct_loc(Closure).
 		
-analyze(MyNodeID, _Parents, Heap, ParentSched, Loader) ->
-	#atom_node{closure=Closure} = sched:get_node_info(MyNodeID, ParentSched),
-	%TODO: for the atom node, it might be OK to just create a brand-new schedule, since we only write to it
-	%this might be a little more efficient, or not... who knows...
-	MySched = sched:new_child_schedule(ParentSched),
-	
+analyze(MyNodeID, Heap, Sched, Loader) ->
+	#atom_node{closure=Closure} = sched:get_node_info(MyNodeID, Sched),	
 	#block{name=N, filename=FN, start_line=S, end_line=E, body=Body} = loader:get_block(closure:block_ref(Closure), Loader),
+
 	debug:set_context(block_info, lists:flatten(io_lib:format("block ~w in file ~s:~w-~w", [N, FN, S, E]))),
 	?f("analyzing node ~s, block ~w", [pretty:string(MyNodeID), element(3,closure:block_ref(Closure))]),
 	
 	This = closure:struct_loc(Closure),
-	{_Regs, MySched2, Heap2} = lists:foldl(fun(Instruction, Acc)->
+	{_Regs, NewNodes, Sched2, Heap2} = lists:foldl(fun(Instruction, Acc)->
 			analyze_instruction(Instruction, MyNodeID, This, Acc)
 		end,
-		{dict:new(), MySched, Heap},
+		{dict:new(), [], Sched, Heap},
 		Body),
 		
 	%store the result heap
 	debug:clear_context(block_info),
-	MySched3 = sched:set_result(MyNodeID, Heap2, MySched2),
-	MySched3.
+	Sched3 = sched:set_result(MyNodeID, Heap2, Sched2),
+	{NewNodes, Sched3}.
 	
-analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, Sched, _Heap}=RSH) ->
+analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, NewNodes, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
-	{Value, Heap2} = value(I#move.value, Now, This, RSH),
+	{Value, Heap2} = value(I#move.value, Now, This, {Regs, Sched, Heap}),
 	?f("Instruction ~w; value to store is ~w", [I, Value]),
 	{Regs2, Heap3} = store(I#move.target, Value, This, Regs, Heap2),
 	debug:clear_context(line_no),
-	{Regs2, Sched, Heap3};
-analyze_instruction(#order{line_no=LN}=I, _Now, This, {Regs, Sched, Heap}) ->
+	{Regs2, NewNodes, Sched, Heap3};
+analyze_instruction(#order{line_no=LN}=I, _Now, This, {Regs, NewNodes, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
 	?f("Instruction ~w", [I]),
 	Lhs = slot_or_register(I#order.lhs, This, Regs, Heap),
@@ -64,8 +61,8 @@ analyze_instruction(#order{line_no=LN}=I, _Now, This, {Regs, Sched, Heap}) ->
 	node:assert_node_id(Rhs),
 	Sched2 = sched:new_edge(Lhs, Rhs, Sched),
 	debug:clear_context(line_no),
-	{Regs, Sched2, Heap};
-analyze_instruction(#intrinsic{line_no=LN, nth=Nth}=I, Now, This, {Regs, Sched, Heap}) ->
+	{Regs, NewNodes, Sched2, Heap};
+analyze_instruction(#intrinsic{line_no=LN, nth=Nth}=I, Now, This, {Regs, NewNodes, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
 	?f("Instruction ~w; regs are: ~w", [I, Regs]),
 	
@@ -79,16 +76,16 @@ analyze_instruction(#intrinsic{line_no=LN, nth=Nth}=I, Now, This, {Regs, Sched, 
 	Name = I#intrinsic.name,
 	Result = case erlang:function_exported(intrinsics, Name, length(InValues)+4) of
 		true ->
-			{ResSched, ResHeap, ResValues} = apply(intrinsics, Name, [Sched, Heap2, Nth, Now | InValues]),
+			{ResNewNodes, ResSched, ResHeap, ResValues} = apply(intrinsics, Name, [Sched, Heap2, Nth, Now | InValues]),
 			{Regs2, ResHeap2} = store_values(I#intrinsic.out_lhsides, ResValues, This, {Regs, ResHeap}),
-			{Regs2, ResSched, ResHeap2};
+			{Regs2, ResNewNodes++NewNodes, ResSched, ResHeap2};
 		false ->
 			debug:fatal("Invalid intrinsic ~w with parameters ~w in line ~w, ~s", [Name, InValues, debug:get_context(line_no), debug:get_context(block_info)]),
 			error
 	end,
 	debug:clear_context(line_no),
 	Result;
-analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
+analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, NewNodes, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
 	?f("Instruction ~w", [I]),
 	BlockRef = activation_lhs(I#schedule.block, This, Regs, Heap),
@@ -97,14 +94,13 @@ analyze_instruction(#schedule{line_no=LN}=I, Now, This, {Regs, Sched, Heap}) ->
 	NewNodeID = node:split_node_id(I#schedule.nth, Now),
 	NewNode = split_node:add_closure(closure:new(BlockRef, StructLoc), split_node:new()),
 	
-	Sched2 = sched:new_node(NewNodeID, Sched),
-	Sched3 = sched:set_node_info(NewNodeID, NewNode, Sched2),
-	Sched4 = sched:new_edge(Now, NewNodeID, Sched3),
-	Sched5 = split_node:create_union_node(NewNodeID, Sched4),
+	Sched2 = sched:set_node_info(NewNodeID, NewNode, Sched),
+	Sched3 = sched:new_edge(Now, NewNodeID, Sched2),
+	{UnionNodeID, Sched4} = split_node:create_union_node(NewNodeID, Sched3),
 	
 	{Regs2, Heap3} = store(I#schedule.target, NewNodeID, This, Regs, Heap2),
 	debug:clear_context(line_no),
-	{Regs2, Sched5, Heap3}.
+	{Regs2, [NewNodeID, UnionNodeID|NewNodes], Sched4, Heap3}.
 
 %****************************************	
 % Store helpers

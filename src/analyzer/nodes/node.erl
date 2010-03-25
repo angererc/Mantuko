@@ -15,13 +15,13 @@
 -record (atom_node_id, {path}).
 
 % faking some virtual method call and inheritance here
-% -> sched()
-analyze(#split_node_id{}=Loc, Parents, Heap, Sched, Loader) ->
-	split_node:analyze(Loc, Parents, Heap, Sched, Loader);
-analyze(#union_node_id{}=Loc, Parents, Heap, Sched, Loader) ->
-	union_node:analyze(Loc, Parents, Heap, Sched, Loader);
-analyze(#atom_node_id{}=Loc, Parents, Heap, Sched, Loader) ->
-	atom_node:analyze(Loc, Parents, Heap, Sched, Loader).
+% -> {[NewNodes], sched()}
+analyze(#split_node_id{}=Loc, ParentSplitNodes, Heap, Sched, Loader) ->
+	split_node:analyze(Loc, ParentSplitNodes, Heap, Sched, Loader);
+analyze(#union_node_id{}=Loc, ParentSplitNodes, Heap, Sched, Loader) ->
+	union_node:analyze(Loc, ParentSplitNodes, Heap, Sched, Loader);
+analyze(#atom_node_id{}=Loc, _ParentSplitNodes, Heap, Sched, Loader) ->
+	atom_node:analyze(Loc, Heap, Sched, Loader).
 	
 % -> set() | Value
 get_block_refs(#split_node_id{}=Loc, Sched) ->

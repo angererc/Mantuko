@@ -13,6 +13,6 @@ new() ->
 merge(One, One) ->
 	One.
 	
-analyze(MyNodeID, _Parents, _Heap, _Sched, _Loader) ->
+analyze(MyNodeID, _ParentSplitNodes, _Heap, _Sched, _Loader) ->
 	?f("analyzing node ~s", [pretty:string(MyNodeID)]),
 	ok.
