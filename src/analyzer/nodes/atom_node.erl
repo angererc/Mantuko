@@ -48,7 +48,7 @@ analyze(MyNodeID, Heap, Sched, Loader) ->
 analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, NewNodes, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
 	{Value, Heap2} = value(I#move.value, Now, This, {Regs, Sched, Heap}),
-	?f("Instruction ~w; value to store is ~w", [I, Value]),
+	?f("Instruction ~w; value to store is ~s", [I, pretty:string(Value)]),
 	{Regs2, Heap3} = store(I#move.target, Value, This, Regs, Heap2),
 	debug:clear_context(line_no),
 	{Regs2, NewNodes, Sched, Heap3};

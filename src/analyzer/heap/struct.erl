@@ -23,13 +23,13 @@ set(#sym{name=Slot}, #nil{}, Struct) ->
 	?f("setting struct slot ~w to nil", [Slot]),
 	Struct#struct{slots=dict:erase(Slot, Struct#struct.slots)};
 set(#sym{name=Slot}, Value, Struct) ->
-	?f("setting struct slot ~w to ~w", [Slot, Value]),
+	?f("setting struct slot ~w to ~s", [Slot, pretty:string(Value)]),
 	Struct#struct{slots=dict:store(Slot, Value, Struct#struct.slots)}.
 	
 get(#sym{name=Slot}, Struct) ->
 	case dict:find(Slot, Struct#struct.slots) of
 		{ok, Value} -> 
-			?f("getting struct slot ~w => ~w", [Slot, Value]),
+			?f("getting struct slot ~w => ~s", [Slot, pretty:string(Value)]),
 			Value;
 		error -> 
 			?f("getting struct slot ~w => nil", [Slot]),

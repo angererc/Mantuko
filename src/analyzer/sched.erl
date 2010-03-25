@@ -113,7 +113,7 @@ merge(S1, S2) ->
 					S1#sched.node_infos, 
 					S2#sched.node_infos),
 	InEdges = dict:merge(
-					fun(_SourceNode, Sources1, Sources2)-> Sources1 ++ Sources2 end, 
+					fun(_SourceNode, Sources1, Sources2)-> NewIn2 = lists:subtract(Sources2, Sources1), Sources1++NewIn2 end, 
 					S1#sched.in_edges, 
 					S2#sched.in_edges),
 	Results = dict:merge(
@@ -131,7 +131,7 @@ merge(S1, S2) ->
 	
 compute_incoming_heap(NodeID, Sched) ->
 	InNodes = in_neighbours(NodeID, Sched),
-	?f("compute incomng heap: ~w ~w", [NodeID, InNodes]),
+	?f("compute incomng heap for ~s: ~w incoming edges found from ~s", [pretty:string(NodeID), length(InNodes), pretty:string(InNodes)]),
 	[InHeap] = lists:map(fun(InNode)-> get_result(InNode, Sched) end, InNodes),
 	InHeap.
 	

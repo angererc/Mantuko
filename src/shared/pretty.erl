@@ -6,10 +6,15 @@ string(List) when is_list(List) ->
 	list(List);
 string(Tuple) when is_tuple(Tuple) ->
 	Type = element(1, Tuple),
-	pretty:Type(Tuple).
+	case erlang:function_exported(pretty, Type, 1) of
+		true ->
+			pretty:Type(Tuple);
+		false -> 
+			lists:flatten(io_lib:format("(a ~w)", [Type]))
+	end.
 
 list(List) when is_list(List) ->
-	lists:map(fun(L)->string(L) end, List).
+	"[" ++ lists:map(fun(L)->string(L) ++ "," end, List) ++ "]".
 
 split_node_id(NodeID) ->
 	lists:flatten(io_lib:format("<split ~p>", [node_id(NodeID)])).
@@ -19,7 +24,7 @@ union_node_id(NodeID) ->
 	
 atom_node_id(NodeID) ->
 	lists:flatten(io_lib:format("<atom ~w>", [node_id(NodeID)])).
-	
+
 node_id(NodeID) ->
 	case get(NodeID) of
 		undefined ->
