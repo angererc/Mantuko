@@ -77,6 +77,10 @@ get_struct_locs(MyNodeID, Sched) ->
 	#split_node{closures=Closures} = sched:get_node_info(MyNodeID, Sched),
 	closure:extract_structs(Closures).
 		
+	% we first analyze all the schedulable nodes
+	% then we try the loop heads that we found
+	% if a loop head was analyzed, we try the schedulable nodes again
+	% we end if no schedulable nodes are left and the loops that we found are all our parent's issue
 analyze_till_fixed_point(MyNodeID, ParentSplitNodes, Worklist, LoopMarkers, Sched, Loader) ->
 	?f("node ~s analyze_till_fixed_point", [pretty:string(MyNodeID)]),
 	timer:sleep(10),
@@ -97,7 +101,7 @@ analyze_schedulable_nodes(MyNodeID, ParentSplitNodes, Schedulables, Unschedulabl
 		fun(ChildNodeID, {NewNodesAcc, LoopMarkersAcc, SchedAcc}) ->
 			ChildHeap = sched:compute_incoming_heap(ChildNodeID, Sched),
 			{NewChildNodes, NewLoopMarkers, ChildSched} = node:analyze(ChildNodeID, ParentSplitNodes, ChildHeap, Sched, Loader),
-			{NewChildNodes ++ NewNodesAcc, NewLoopMarkers ++ LoopMarkersAcc, sched:merge(ChildSched, SchedAcc)}
+			{NewChildNodes ++ NewNodesAcc, NewLoopMarkers ++ LoopMarkersAcc, sched:plus(ChildSched, SchedAcc)}
 		end,
 		{Unschedulables, LoopMarkers, Sched},
 		Schedulables
@@ -111,7 +115,7 @@ analyze_loop_markers(MyNodeID, ParentSplitNodes, Unschedulables, LoopMarkers, Sc
 				MyNodeID -> %we are the loop head
 					%shift the heaps etc...
 					{NewChildNodes, NewLoopMarkers, ChildSched} = analyze_after_loop(Marker#loop.node_id, ParentSplitNodes, Marker#loop.heap, Sched, Loader),
-					{NewChildNodes ++ NewNodesAcc, NewLoopMarkers ++ LoopMarkersAcc, sched:merge(ChildSched, SchedAcc)};
+					{NewChildNodes ++ NewNodesAcc, NewLoopMarkers ++ LoopMarkersAcc, sched:plus(ChildSched, SchedAcc)};
 				_Some ->
 					{NewNodesAcc, [Marker|LoopMarkersAcc], SchedAcc}
 			end

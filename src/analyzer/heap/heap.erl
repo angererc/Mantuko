@@ -5,6 +5,7 @@
 
 -export ([new/0, new_struct/2, new_array/2, new_lock/2]).
 -export ([get/2, set/3]).
+-export ([zip/4, merge/4]).
 
 -record (heap, {mem=dict:new()}).
 	
@@ -37,3 +38,23 @@ get(Loc, Heap) ->
 set(Loc, Obj, Heap) ->
 	?f("heap setting object at location ~s to ~s", [debug:val_to_string(Loc), debug:val_to_string(Obj)]),
 	Heap#heap{mem=dict:store(Loc, Obj, Heap#heap.mem)}.
+
+zip(ZippingNodeID, Heap1, Heap2, Sched) ->
+	Mem = dict:merge(
+		fun(Loc, Object1, Object2) ->
+			object:zip(ZippingNodeID, Loc, Object1, Object2, Sched)
+		end,
+		Heap1#heap.mem, 
+		Heap2#heap.mem
+	),
+	#heap{mem=Mem}.
+	
+merge(MergingNodeID, Heap1, Heap2, Sched) ->
+	Mem = dict:merge(
+		fun(Loc, Object1, Object2) ->
+			object:merge(MergingNodeID, Loc, Object1, Object2, Sched)
+		end,
+		Heap1#heap.mem,
+		Heap2#heap.mem
+	),
+	#heap{mem=Mem}.

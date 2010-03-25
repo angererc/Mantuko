@@ -7,7 +7,7 @@
 -export ([assert_invariants/2]).
 -export ([set_node_info/3, get_node_info/2, has_node_info/2, has_result/2, set_result/3, get_result/2]).
 -export ([separate_schedulable_nodes/2, is_schedulable/2]).
--export ([in_neighbours/2, merge/2]).
+-export ([in_neighbours/2, plus/2]).
 -export ([compute_incoming_heap/2]).
 
 -record (sched, {node_infos, in_edges, results}).
@@ -107,7 +107,7 @@ in_neighbours(NodeID, Sched) ->
 		error -> []
 	end.
 		
-merge(S1, S2) ->
+plus(S1, S2) ->
 	NodeInfos = dict:merge(
 					fun(_NodeID, Info1, Info2)-> node:merge(Info1, Info2) end, 
 					S1#sched.node_infos, 
@@ -132,6 +132,7 @@ merge(S1, S2) ->
 compute_incoming_heap(NodeID, Sched) ->
 	InNodes = in_neighbours(NodeID, Sched),
 	?f("compute incomng heap for ~s: ~w incoming edges found from ~s", [pretty:string(NodeID), length(InNodes), pretty:string(InNodes)]),
+	
 	[InHeap] = lists:map(fun(InNode)-> get_result(InNode, Sched) end, InNodes),
 	InHeap.
 	
