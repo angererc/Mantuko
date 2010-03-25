@@ -43,7 +43,7 @@ analyze(MyNodeID, Heap, Sched, Loader) ->
 	%store the result heap
 	debug:clear_context(block_info),
 	Sched3 = sched:set_result(MyNodeID, Heap2, Sched2),
-	{NewNodes, Sched3}.
+	{NewNodes, [], Sched3}.
 	
 analyze_instruction(#move{line_no=LN}=I, Now, This, {Regs, NewNodes, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
