@@ -6,7 +6,7 @@
 -export ([get_block_refs/2, get_struct_locs/2]).
 
 -record (split_node, {closures}).
-
+-record (loop, {head_id, node_id, heap}).
 new() ->
 	#split_node{closures=sets:new()}.
 
@@ -25,17 +25,26 @@ create_union_node(SplitNodeID, Sched) ->
 add_closure(Closure, #split_node{closures=Closures}=Node) ->
 	Node#split_node{closures=sets:add_element(Closure, Closures)}.
 	
+analyze_after_loop(MyNodeID, ParentSplitNodes, Heap, Sched, Loader) ->
+	?f("analyzing node ~s after loop", [pretty:string(MyNodeID)]),
+	#split_node{closures=Closures} = sched:get_node_info(MyNodeID, Sched),
+	%store the incoming heap
+	Sched2 = sched:set_result(MyNodeID, Heap, Sched),
+	{Worklist, Sched3} = create_nodes(MyNodeID, Closures, Sched2),
+	%we leave ourselves out of the parent split nodes because we are not the loop head
+	analyze_till_fixed_point(MyNodeID, ParentSplitNodes, Worklist, [], Sched3, Loader).
+	
 analyze(MyNodeID, ParentSplitNodes, Heap, Sched, Loader) ->
 	?f("analyzing node ~s", [pretty:string(MyNodeID)]),
 	#split_node{closures=Closures} = sched:get_node_info(MyNodeID, Sched),
 	case check_for_loop(Closures, ParentSplitNodes, Sched) of
-		{true, _Parent} ->
-			loop_found;
+		{true, Parent} ->
+			{[], [#loop{head_id=Parent, node_id=MyNodeID, heap=Heap}], Sched};
 		false ->
 			%store the incoming heap
 			Sched2 = sched:set_result(MyNodeID, Heap, Sched),
 			{Worklist, Sched3} = create_nodes(MyNodeID, Closures, Sched2),
-			analyze_till_fixed_point(MyNodeID, [MyNodeID|ParentSplitNodes], Worklist, Sched3, Loader)
+			analyze_till_fixed_point(MyNodeID, [MyNodeID|ParentSplitNodes], Worklist, [], Sched3, Loader)
 	end.
 
 % -> {NewNodes, Sched2}
@@ -68,33 +77,57 @@ get_struct_locs(MyNodeID, Sched) ->
 	#split_node{closures=Closures} = sched:get_node_info(MyNodeID, Sched),
 	closure:extract_structs(Closures).
 		
-analyze_till_fixed_point(MyNodeID, ParentSplitNodes, Worklist, Sched, Loader) ->
+analyze_till_fixed_point(MyNodeID, ParentSplitNodes, Worklist, LoopMarkers, Sched, Loader) ->
 	?f("node ~s analyze_till_fixed_point", [pretty:string(MyNodeID)]),
 	timer:sleep(10),
 	case sched:separate_schedulable_nodes(Worklist, Sched) of
 		{[], Unschedulables} -> 
-			?f("finished analyzing schedulable nodes; ~w are still open: ~w", [length(Unschedulables), Unschedulables]),
-			{Unschedulables, Sched}; %we are done, return to the split node that called us
+			?f("finished analyzing schedulable nodes; ~w are still open and we have ~w loop markers", [length(Unschedulables), length(LoopMarkers)]),
+			analyze_loop_markers(MyNodeID, ParentSplitNodes, Unschedulables, LoopMarkers, Sched, Loader);
 		{Schedulables, Unschedulables} ->
 			?f("found ~w schedulable nodes: ~s", [length(Schedulables), pretty:string(Schedulables)]),
-			analyze_schedulable_nodes(MyNodeID, ParentSplitNodes, Schedulables, Unschedulables, Sched, Loader)
+			analyze_schedulable_nodes(MyNodeID, ParentSplitNodes, Schedulables, Unschedulables, LoopMarkers, Sched, Loader)
 	end.
-	
-analyze_schedulable_nodes(MyNodeID, ParentSplitNodes, Schedulables, Unschedulables, Sched, Loader) ->
+
+analyze_schedulable_nodes(MyNodeID, ParentSplitNodes, Schedulables, Unschedulables, LoopMarkers, Sched, Loader) ->
 	?f("node ~s analyze_schedulable_nodes", [pretty:string(MyNodeID)]),
 	timer:sleep(10),
 	%
-	{OpenNodes, MergedSched} = lists:foldl(
-		fun(ChildNodeID, {NewNodesAcc, SchedAcc}) ->
+	{OpenNodes, LoopMarkers2, MergedSched} = lists:foldl(
+		fun(ChildNodeID, {NewNodesAcc, LoopMarkersAcc, SchedAcc}) ->
 			ChildHeap = sched:compute_incoming_heap(ChildNodeID, Sched),
-			{NewChildNodes, ChildSched} = node:analyze(ChildNodeID, ParentSplitNodes, ChildHeap, Sched, Loader),
-			{NewChildNodes ++ NewNodesAcc, sched:merge(ChildSched, SchedAcc)}
+			{NewChildNodes, NewLoopMarkers, ChildSched} = node:analyze(ChildNodeID, ParentSplitNodes, ChildHeap, Sched, Loader),
+			{NewChildNodes ++ NewNodesAcc, NewLoopMarkers ++ LoopMarkersAcc, sched:merge(ChildSched, SchedAcc)}
 		end,
-		{Unschedulables, Sched},
+		{Unschedulables, LoopMarkers, Sched},
 		Schedulables
 	),
-	analyze_till_fixed_point(MyNodeID, ParentSplitNodes, OpenNodes, MergedSched, Loader).
-	
+	analyze_till_fixed_point(MyNodeID, ParentSplitNodes, OpenNodes, LoopMarkers2, MergedSched, Loader).
+
+analyze_loop_markers(MyNodeID, ParentSplitNodes, Unschedulables, LoopMarkers, Sched, Loader) ->
+	{OpenNodes, OpenLoopMarkers, MergedSched} = lists:foldl(
+		fun(#loop{}=Marker, {NewNodesAcc, LoopMarkersAcc, SchedAcc}) ->
+			case Marker#loop.head_id of
+				MyNodeID -> %we are the loop head
+					%shift the heaps etc...
+					{NewChildNodes, NewLoopMarkers, ChildSched} = analyze_after_loop(Marker#loop.node_id, ParentSplitNodes, Marker#loop.heap, Sched, Loader),
+					{NewChildNodes ++ NewNodesAcc, NewLoopMarkers ++ LoopMarkersAcc, sched:merge(ChildSched, SchedAcc)};
+				_Some ->
+					{NewNodesAcc, [Marker|LoopMarkersAcc], SchedAcc}
+			end
+		end,
+		{Unschedulables, [], Sched},
+		LoopMarkers		
+	),
+	if
+		LoopMarkers =:= OpenLoopMarkers ->
+			%we didn't achieve anything, so we are done here; we will return to the parent node's analysis
+			{OpenNodes, OpenLoopMarkers, MergedSched};
+		true ->
+			%we computed some loop head, so we now can try to analyse more of the previously unschedulable ones
+			analyze_till_fixed_point(MyNodeID, ParentSplitNodes, OpenNodes, OpenLoopMarkers, MergedSched, Loader)
+	end.
+		
 check_for_loop(_MyClosures, [], _Sched) ->
 	false;
 check_for_loop(MyClosures, [Parent|Grandpa], Sched) ->
