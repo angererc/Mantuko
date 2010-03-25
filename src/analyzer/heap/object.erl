@@ -3,7 +3,7 @@
 %an object is either a struct or an array
 
 -export ([loc_type/1, struct_loc/2, array_loc/2, lock_loc/2]).
--export ([set/3, get/2]).
+-export ([write/4, read/3]).
 -export ([zip/5, merge/5]).
 
 -record (struct_loc, {nth, act_loc}).
@@ -25,16 +25,18 @@ array_loc(Nth, ActLoc) when is_integer(Nth) ->
 lock_loc(Nth, ActLoc) when is_integer(Nth) ->
 	#lock_loc{nth=Nth, act_loc=ActLoc}.
 		
-set(SlotName, Value, Object) ->	
+% -> Object2
+write(WritingNodeID, SlotName, Value, Object) ->	
 	case struct:is_struct(Object) of
-		true ->	struct:set(SlotName, Value, Object);
-		false -> array:set(SlotName, Value, Object)
+		true ->	struct:write(WritingNodeID, SlotName, Value, Object);
+		false -> array:write(WritingNodeID, SlotName, Value, Object)
 	end.
 	
-get(SlotName, Object) ->
+% -> {Value, Object2}
+read(WritingNodeID, SlotName, Object) ->
 	case struct:is_struct(Object) of
-		true -> struct:get(SlotName, Object);
-		false -> array:get(SlotName, Object)
+		true -> struct:read(WritingNodeID, SlotName, Object);
+		false -> array:read(WritingNodeID, SlotName, Object)
 	end.
 
 zip(ZippingNodeID, Loc, Object1, Object2, Sched) ->

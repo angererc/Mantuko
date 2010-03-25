@@ -5,7 +5,7 @@
 
 -export ([new/0]).
 -export ([is_struct/1]).
--export ([set/3, get/2]).
+-export ([write/4, read/3]).
 -export ([zip/5, merge/5]).
 
 -record (struct, {reader, writer, slots}).
@@ -20,21 +20,21 @@ is_struct(_Else) ->
 
 %note: we cannot use the whole #sym{} record because the same sym might
 % occur with different nth fields (not sure if that will stay, but that's how it is right now!)
-set(#sym{name=Slot}, #nil{}, Struct) ->	
+write(WritingNodeID, #sym{name=Slot}, #nil{}, Struct) ->	
 	?f("setting struct slot ~w to nil", [Slot]),
-	Struct#struct{slots=dict:erase(Slot, Struct#struct.slots)};
-set(#sym{name=Slot}, Value, Struct) ->
+	Struct#struct{writer=WritingNodeID, slots=dict:erase(Slot, Struct#struct.slots)};
+write(WritingNodeID, #sym{name=Slot}, Value, Struct) ->
 	?f("setting struct slot ~w to ~s", [Slot, pretty:string(Value)]),
-	Struct#struct{slots=dict:store(Slot, Value, Struct#struct.slots)}.
+	Struct#struct{writer=WritingNodeID, slots=dict:store(Slot, Value, Struct#struct.slots)}.
 	
-get(#sym{name=Slot}, Struct) ->
+read(ReadingNodeID, #sym{name=Slot}, Struct) ->
 	case dict:find(Slot, Struct#struct.slots) of
 		{ok, Value} -> 
 			?f("getting struct slot ~w => ~s", [Slot, pretty:string(Value)]),
-			Value;
+			{Value, Struct#struct{reader=ReadingNodeID}};
 		error -> 
 			?f("getting struct slot ~w => nil", [Slot]),
-			#nil{}
+			{#nil{}, Struct#struct{reader=ReadingNodeID}}
 	end.
 	
 zip(ZippingNodeID, Loc, S1, S2, Sched) ->
@@ -92,7 +92,15 @@ merge(MergingNodeID, _Loc, S1, S2, Sched) ->
 	
 	NewSlots = sets:fold(
 		fun(SlotName, Acc)->	
-			dict:store(SlotName, merge_values(struct:get(SlotName, S1), struct:get(SlotName, S2)), Acc)
+			Value1 = case dict:find(SlotName, S1#struct.slots) of
+				{ok, Val1} -> Val1;
+				error -> #nil{}
+			end,
+			Value2 = case dict:find(SlotName, S2#struct.slots) of
+				{ok, Val2} -> Val2;
+				error -> #nil{}
+			end,
+			dict:store(SlotName, merge_values(Value1, Value2), Acc)
 		end,
 		dict:new(),
 		AllSlots),
