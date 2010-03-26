@@ -179,7 +179,23 @@ plus(S1, S2) ->
 compute_incoming_heap(NodeID, Sched) ->
 	InNodes = in_neighbours(NodeID, Sched),
 	?f("compute incomng heap for ~s: ~w incoming edges found from ~s", [pretty:string(NodeID), length(InNodes), pretty:string(InNodes)]),
+	InNodeHeapPairs = lists:map(fun(InNode)-> {InNode, get_result(InNode, Sched)} end, InNodes),
+	combine_heaps(NodeID, InNodeHeapPairs, Sched).
 	
-	[InHeap] = lists:map(fun(InNode)-> get_result(InNode, Sched) end, InNodes),
-	InHeap.
+combine_heaps(_NodeID, [{_InNode1, InHeap1}], _Sched) ->
+	InHeap1;
+combine_heaps(NodeID, [{InNode1, InHeap1}=C1, {InNode2, InHeap2}=C2|Rest], Sched) ->
+	CombinedNodeAndHeap = case get_relationship(InNode1, InNode2, Sched) of
+		concurrent ->
+			%TODO: make sure that we merge the heaps in the correct order!!!!! Not sure if that makes sense
+			{node:find_common_ancestor(InNode1, InNode2), heap:zip(NodeID, InHeap1, InHeap2, Sched)};
+		exclusive ->
+			{node:find_common_ancestor(InNode1, InNode2), heap:merge(NodeID, InHeap1, InHeap2, Sched)};
+		left_hb_right ->
+			C2;
+	 	right_hb_left ->
+			C1
+	end,
+	combine_heaps(NodeID, [CombinedNodeAndHeap|Rest], Sched).
+	
 	
