@@ -101,6 +101,7 @@ analyze_schedulable_nodes(MyNodeID, ParentSplitNodes, Schedulables, Unschedulabl
 		fun(ChildNodeID, {NewNodesAcc, LoopMarkersAcc, SchedAcc}) ->
 			ChildHeap = sched:compute_incoming_heap(ChildNodeID, Sched),
 			{NewChildNodes, NewLoopMarkers, ChildSched} = node:analyze(ChildNodeID, ParentSplitNodes, ChildHeap, Sched, Loader),
+			%TODO make sure we deal with genuine edges here!!
 			{NewChildNodes ++ NewNodesAcc, NewLoopMarkers ++ LoopMarkersAcc, sched:plus(ChildSched, SchedAcc)}
 		end,
 		{Unschedulables, LoopMarkers, Sched},

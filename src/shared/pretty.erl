@@ -2,6 +2,8 @@
 
 -compile(export_all).
 
+string(Atom) when is_atom(Atom) ->
+	atom_to_list(Atom);
 string(List) when is_list(List) ->
 	list(List);
 string(Tuple) when is_tuple(Tuple) ->

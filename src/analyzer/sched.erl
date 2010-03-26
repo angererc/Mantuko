@@ -83,6 +83,26 @@ get_result(NodeID, Sched) ->
 			error
 	end.
 	
+happens_before(LHS, RHS, Sched) ->
+	path_exists(LHS, in_neighbours(RHS, Sched), [], [RHS], [RHS], 1, Sched, 1).
+
+%this algorithm is taken from digraph:get_path but reversed (we only have outgoing neighbors)	
+path_exists(Source, [Source|Rest], Cont, Xs, Ps, Prune, Sched, Counter) ->
+	if 
+		Counter < Prune -> path_exists(Source, Rest, Cont, Xs, Ps, Prune, Sched, Counter);
+		true -> true
+	end;
+path_exists(Source, [Node|Rest], Cont, Xs, Ps, Prune, Sched, Counter) ->
+	case lists:member(Node, Xs) of
+		true -> path_exists(Source, Rest, Cont, Xs, Ps, Prune, Sched, Counter);
+		false -> path_exists(
+					Source, in_neighbours(Node, Sched), 
+					[{Rest, Ps}|Cont], [Node|Xs], [Node|Ps], Prune, Sched, Counter+1)
+	end;
+path_exists(Node, [], [{Vs,Ps}|Cont], Xs, _, Prune, Sched, Counter) ->
+	path_exists(Node, Vs, Cont, Xs, Ps, Prune, Sched, Counter-1);
+path_exists(_, [], [], _, _, _, _, _Counter) -> false.	
+
 is_schedulable(NodeID, Sched) ->
 	true = has_node_info(NodeID, Sched),
 	IncomingNodes = in_neighbours(NodeID, Sched),
