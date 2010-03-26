@@ -6,12 +6,15 @@
 
 -export ([analyze_file/2, analyze_string/2]).
 
+-spec analyze_file(string(), [{atom(), term()}]) -> sched:sched().
 analyze_file(Filename, Options) ->
 	analyze(loader:load_from_file(Filename), Options).
 	
+-spec analyze_string(string(), [{atom(), term()}]) -> sched:sched().
 analyze_string(String, Options) ->
 	analyze(loader:load_from_string(String), Options).
 	
+-spec analyze({error, term()}|loader:loader(), [{atom(), term()}]) -> sched:sched().
 analyze({error, Reason}, _Options) ->
 	debug:fatal("load error: ~p", [Reason]);
 analyze(Loader, Options) ->

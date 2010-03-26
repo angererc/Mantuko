@@ -7,4 +7,11 @@
 % The id is the macro name or 'main' for the main block. The id is on position
 % 2 of the tuple so that one can search a list of blocks using lists:keysearch/3
 % Example: <pre>{ *blockbody* }</pre>
--record (block, {name, filename, start_line, end_line, body}).
+
+-record (block, {
+				name::atom(), 
+				filename::string(), 
+				start_line::non_neg_integer(), 
+				end_line::non_neg_integer(), 
+				body::[term()]}).
+				

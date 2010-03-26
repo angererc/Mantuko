@@ -10,6 +10,7 @@
 
 % @type loader().
 % For now, the loader is a list of blocks.
+-type loader() :: [#block{}].
 
 new() ->
 	[].

@@ -11,6 +11,7 @@
 -export ([compute_incoming_heap/2]).
 -export ([happens_before/3, get_relationship/3]).
 
+-type sched() :: {dict(), dict(), dict()}.
 -record (sched, {node_infos, in_edges, results}).
 
 new_empty_schedule() ->
