@@ -4,7 +4,7 @@
 
 -export ([new/1]).
 -export ([write/4, read/3]).
--export ([merge/5, zip/5]).
+-export ([merge/4]).
 
 new(NodeID) ->
 	#array{reader=NodeID, writer=NodeID, values=dict:new()}.
@@ -12,12 +12,10 @@ new(NodeID) ->
 write(WritingNodeID, Index, Value, #array{}=Arr) ->
 	Arr#array{writer=WritingNodeID, values=dict:store(Index, Value, Arr#array.values)}.
 	
-read(_WritingNodeID, Index, not_yet_implemented) ->
+read(_WritingNodeID, _Index, not_yet_implemented) ->
 	ok.
 	
 	
-merge(MergingNodeID, _Loc, A1, A2, Sched) ->
-	#array{values=sets:to_list(sets:from_list(A1#array.values ++ A2#array.values))}.
-	
-zip(MergingNodeID, _Loc, A1, A2, Sched) ->
-	ok.
+merge(LastReader, LastWriter, A1, A2) ->
+	Values = dict:merge(fun(_Index, Value1, Value2)-> value:merge(Value1, Value2) end, A1#array.values, A2#array.values),
+	#array{reader=LastReader, writer=LastWriter, values=Values}.
