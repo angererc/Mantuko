@@ -32,7 +32,7 @@ analyze(Loader, Options) ->
 	Sched = sched:set_node_info(RootNodeID, RootNode, sched:new_empty_schedule()),
 	{ExitNode, Sched2} = split_node:create_union_node(RootNodeID, Sched),
 	
-	Heap = heap:new_struct(ThisLoc, heap:new()),
+	Heap = heap:new_struct(RootNodeID, ThisLoc, heap:new()),
 	
 	node:analyze(RootNodeID, [], Heap, Sched2, Loader),
 	node:analyze(ExitNode).

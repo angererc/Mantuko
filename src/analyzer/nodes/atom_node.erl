@@ -161,7 +161,7 @@ activation_rhs(#this{}, _Now, This, _Regs, Heap) ->
 	{This, Heap};
 activation_rhs(#new_struct{nth=Nth}, Now, _This, _Regs, Heap) ->
 	NewLoc = object:struct_loc(Nth, Now),
-	Heap2 = heap:new_struct(NewLoc, Heap),
+	Heap2 = heap:new_struct(Now, NewLoc, Heap),
 	{NewLoc, Heap2};
 activation_rhs(SlotOrReg, Now, This, Regs, Heap) ->
 	slot_or_register(SlotOrReg, Now, This, Regs, Heap).
@@ -177,15 +177,15 @@ value(#this{}, _Now, This, {_Regs, _Sched, Heap}) ->
 	{This, Heap};
 value(#new_struct{nth=Nth}, Now, _This, {_Regs, _Sched, Heap}) ->
 	NewLoc = object:struct_loc(Nth, Now),
-	Heap2 = heap:new_struct(NewLoc, Heap),
+	Heap2 = heap:new_struct(Now, NewLoc, Heap),
 	{NewLoc, Heap2};
 value(#new_array{nth=Nth}, Now, _This, {_Regs, _Sched, Heap}) ->
 	NewLoc = object:array_loc(Nth, Now),
-	Heap2 = heap:new_array(NewLoc, Heap),
+	Heap2 = heap:new_array(Now, NewLoc, Heap),
 	{NewLoc, Heap2};
 value(#new_lock{nth=Nth}, Now, _This, {_Regs, _Sched, Heap}) ->
 	NewLoc = object:lock_loc(Nth, Now),
-	Heap2 = heap:new_lock(NewLoc, Heap),
+	Heap2 = heap:new_lock(Now, NewLoc, Heap),
 	{NewLoc, Heap2};
 value(#nil{}=V, _Now, _This, {_Regs, _Sched, Heap}) ->
 	{V, Heap};

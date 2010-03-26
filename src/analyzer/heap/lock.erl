@@ -1,8 +1,8 @@
 -module (lock).
 
--export ([new/0]).
+-export ([new/1]).
 
-%-record (lock, {}).
+-record (lock, {reader, writer}).
 
-new() ->
-	ok.
+new(NodeID) ->
+	#lock{reader=NodeID, writer=NodeID}.

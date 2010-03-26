@@ -3,15 +3,15 @@
 -include("include/values.hrl").
 -include("include/debug.hrl").
 
--export ([new/0]).
+-export ([new/1]).
 -export ([is_struct/1]).
 -export ([write/4, read/3]).
 -export ([zip/5, merge/5]).
 
 -record (struct, {reader, writer, slots}).
 
-new() ->
-	#struct{slots=dict:new()}.
+new(NodeID) ->
+	#struct{reader=NodeID, writer=NodeID, slots=dict:new()}.
 	
 is_struct(#struct{}) ->
 	true;
