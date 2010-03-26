@@ -1,8 +1,8 @@
 -module (lock).
 
--export ([new/1]).
+-include("include/objects.hrl").
 
--record (lock, {reader, writer}).
+-export ([new/1]).
 
 new(NodeID) ->
 	#lock{reader=NodeID, writer=NodeID}.

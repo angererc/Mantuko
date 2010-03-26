@@ -17,17 +17,17 @@ new() ->
 new_struct(NodeID, Loc, Heap) ->
 	struct_loc = object:loc_type(Loc),
 	error = dict:find(Loc, Heap#heap.mem),
-	Heap#heap{mem=utils:dict_store(Loc, struct:new(NodeID), Heap#heap.mem)}.
+	Heap#heap{mem=dict:store(Loc, struct:new(NodeID), Heap#heap.mem)}.
 	
-new_array(NodeID Loc, Heap) ->
+new_array(NodeID, Loc, Heap) ->
 	array_loc = object:loc_type(Loc),
 	error = dict:find(Loc, Heap#heap.mem),
-	Heap#heap{mem=utils:dict_store(Loc, array:new(NodeID), Heap#heap.mem)}.
+	Heap#heap{mem=dict:store(Loc, array:new(NodeID), Heap#heap.mem)}.
 	
 new_lock(NodeID, Loc, Heap) ->
 	lock_loc = object:loc_type(Loc),
 	error = dict:find(Loc, Heap#heap.mem),
-	Heap#heap{mem=utils:dict_store(Loc, lock:new(NodeID), Heap#heap.mem)}.
+	Heap#heap{mem=dict:store(Loc, lock:new(NodeID), Heap#heap.mem)}.
 				
 get(Loc, Heap) ->
 	case dict:find(Loc, Heap#heap.mem) of

@@ -1,22 +1,16 @@
 -module (atom_node).
 
 -include("include/debug.hrl").
+-include("include/nodes.hrl").
 -include("include/loader.hrl").
 -include("include/instructions.hrl").
 -include("include/values.hrl").
 
--export ([new/1, merge/2, analyze/4]).
+-export ([new/1, analyze/4]).
 -export ([get_block_ref/2, get_struct_loc/2]).
-
--record (atom_node, {closure}).
 
 new(Closure) ->
 	#atom_node{closure=Closure}.
-
-merge(#atom_node{} = SameNode, SameNode) ->
-	SameNode;
-merge(Else, Other) ->
-	debug:fatal("tried to merge two atom nodes with different closures; this should never happen! ~w and ~w", [Else, Other]).
 	
 get_block_ref(MyNodeID, Sched) ->
 	#atom_node{closure=Closure} = sched:get_node_info(MyNodeID, Sched),

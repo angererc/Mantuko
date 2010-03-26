@@ -1,5 +1,6 @@
 -module (node).
 
+-include("include/nodes.hrl").
 -include("include/debug.hrl").
 
 -export ([analyze/5]).
@@ -101,8 +102,7 @@ assert_node_id(#atom_node_id{}) ->
 	ok.
 	
 %dispatch merge to the concrete node implementations; merge is used when we add two schedules together
-merge(N1, N2) ->
-	%assert that the types are the same; this should always be the case but for reasons of sanity I do it here
-	NodeType = element(1, N1),
-	NodeType = element(1, N2),
-	NodeType:merge(N1, N2).
+merge(#split_node{}=N1, #split_node{}=N2) ->
+	split_node:merge(N1, N2);
+merge(Same, Same) ->
+	Same.

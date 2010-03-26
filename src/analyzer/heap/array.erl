@@ -1,10 +1,10 @@
 -module (array).
 
--export ([new/0]).
+-include("include/objects.hrl").
+
+-export ([new/1]).
 -export ([write/4, read/3]).
 -export ([merge/5, zip/5]).
-
--record (array, {reader, writer, values}).
 
 new(NodeID) ->
 	#array{reader=NodeID, writer=NodeID, values=dict:new()}.
@@ -18,3 +18,6 @@ read(_WritingNodeID, Index, not_yet_implemented) ->
 	
 merge(MergingNodeID, _Loc, A1, A2, Sched) ->
 	#array{values=sets:to_list(sets:from_list(A1#array.values ++ A2#array.values))}.
+	
+zip(MergingNodeID, _Loc, A1, A2, Sched) ->
+	ok.

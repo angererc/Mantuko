@@ -1,6 +1,6 @@
 -module (object).
 
-%an object is either a struct or an array
+-include("include/objects.hrl").
 
 -export ([loc_type/1, struct_loc/2, array_loc/2, lock_loc/2]).
 -export ([write/4, read/3]).
@@ -9,6 +9,8 @@
 -record (struct_loc, {nth, act_loc}).
 -record (array_loc, {nth, act_loc}).
 -record (lock_loc, {nth, act_loc}).
+
+% objects are structs, arrays, and locks
 
 % ***********************************************
 %	Locations
@@ -26,27 +28,23 @@ lock_loc(Nth, ActLoc) when is_integer(Nth) ->
 	#lock_loc{nth=Nth, act_loc=ActLoc}.
 		
 % -> Object2
-write(WritingNodeID, SlotName, Value, Object) ->	
-	case struct:is_struct(Object) of
-		true ->	struct:write(WritingNodeID, SlotName, Value, Object);
-		false -> array:write(WritingNodeID, SlotName, Value, Object)
-	end.
+write(WritingNodeID, SlotName, Value, #struct{}=Object) ->	
+	struct:write(WritingNodeID, SlotName, Value, Object);
+write(WritingNodeID, SlotName, Value, #array{}=Object) ->	
+	array:write(WritingNodeID, SlotName, Value, Object).
 	
 % -> {Value, Object2}
-read(WritingNodeID, SlotName, Object) ->
-	case struct:is_struct(Object) of
-		true -> struct:read(WritingNodeID, SlotName, Object);
-		false -> array:read(WritingNodeID, SlotName, Object)
-	end.
+read(WritingNodeID, SlotName, #struct{}=Object) ->
+	struct:read(WritingNodeID, SlotName, Object);
+read(WritingNodeID, SlotName, #array{}=Object) ->
+	array:read(WritingNodeID, SlotName, Object).
 
-zip(ZippingNodeID, Loc, Object1, Object2, Sched) ->
-	case struct:is_struct(Object1) of
-		true -> struct:zip(ZippingNodeID, Loc, Object1, Object2, Sched);
-		false -> array:zip(ZippingNodeID, Loc, Object1, Object2, Sched)
-	end.
+zip(ZippingNodeID, Loc, #struct{}=Object1, #struct{}=Object2, Sched) ->
+	struct:zip(ZippingNodeID, Loc, Object1, Object2, Sched);
+zip(ZippingNodeID, Loc, #array{}=Object1, #array{}=Object2, Sched) ->
+	array:zip(ZippingNodeID, Loc, Object1, Object2, Sched).
 	
-merge(ZippingNodeID, Loc, Object1, Object2, Sched) ->
-	case struct:is_struct(Object1) of
-		true -> struct:merge(ZippingNodeID, Loc, Object1, Object2, Sched);
-		false -> array:merge(ZippingNodeID, Loc, Object1, Object2, Sched)
-	end.
+merge(ZippingNodeID, Loc, #struct{}=Object1, #struct{}=Object2, Sched) ->
+	struct:merge(ZippingNodeID, Loc, Object1, Object2, Sched);
+merge(ZippingNodeID, Loc, #array{}=Object1, #array{}=Object2, Sched) ->
+	array:merge(ZippingNodeID, Loc, Object1, Object2, Sched).

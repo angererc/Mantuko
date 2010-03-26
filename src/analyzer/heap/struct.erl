@@ -1,23 +1,16 @@
 -module (struct).
 
+-include("include/objects.hrl").
 -include("include/values.hrl").
 -include("include/debug.hrl").
 
 -export ([new/1]).
--export ([is_struct/1]).
 -export ([write/4, read/3]).
 -export ([zip/5, merge/5]).
-
--record (struct, {reader, writer, slots}).
 
 new(NodeID) ->
 	#struct{reader=NodeID, writer=NodeID, slots=dict:new()}.
 	
-is_struct(#struct{}) ->
-	true;
-is_struct(_Else) ->
-	false.
-
 %note: we cannot use the whole #sym{} record because the same sym might
 % occur with different nth fields (not sure if that will stay, but that's how it is right now!)
 write(WritingNodeID, #sym{name=Slot}, #nil{}, Struct) ->	

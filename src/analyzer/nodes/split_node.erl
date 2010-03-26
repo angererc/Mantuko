@@ -1,11 +1,11 @@
 -module (split_node).
 
 -include("include/debug.hrl").
+-include("include/nodes.hrl").
 
 -export ([new/0, merge/2, create_union_node/2, add_closure/2, analyze/5]).
 -export ([get_block_refs/2, get_struct_locs/2]).
 
--record (split_node, {closures}).
 -record (loop, {head_id, node_id, heap}).
 new() ->
 	#split_node{closures=sets:new()}.
