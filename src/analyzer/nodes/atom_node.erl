@@ -58,7 +58,7 @@ analyze_instruction(#order{line_no=LN}=I, Now, This, {Regs, NewNodes, Sched, Hea
 	{Regs, NewNodes, Sched2, Heap3};
 analyze_instruction(#intrinsic{line_no=LN, nth=Nth}=I, Now, This, {Regs, NewNodes, Sched, Heap}) ->
 	debug:set_context(line_no, LN),
-	?f("Instruction ~w; regs are: ~w", [I, Regs]),
+	?f("Instruction ~w", [I]),
 	
 	{InValues, Heap2} = lists:mapfoldl(fun(Val, HeapAcc)->
 			value(Val, Now, This, {Regs, Sched, HeapAcc})

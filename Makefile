@@ -27,6 +27,9 @@ test: compile
 		-pa test/ebin \
 		-s test_suite test \
 		-s init stop
+		
+check: compile
+	dialyzer ebin/*.beam
 
 #see http://www.gnu.org/software/make/manual/make.html for how to transform a list into a comma-separated list
 quote:= "

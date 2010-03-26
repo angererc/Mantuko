@@ -83,7 +83,6 @@ get_struct_locs(MyNodeID, Sched) ->
 	% we end if no schedulable nodes are left and the loops that we found are all our parent's issue
 analyze_till_fixed_point(MyNodeID, ParentSplitNodes, Worklist, LoopMarkers, Sched, Loader) ->
 	?f("node ~s analyze_till_fixed_point", [pretty:string(MyNodeID)]),
-	timer:sleep(10),
 	case sched:separate_schedulable_nodes(Worklist, Sched) of
 		{[], Unschedulables} -> 
 			?f("finished analyzing schedulable nodes; ~w are still open and we have ~w loop markers", [length(Unschedulables), length(LoopMarkers)]),
@@ -95,7 +94,8 @@ analyze_till_fixed_point(MyNodeID, ParentSplitNodes, Worklist, LoopMarkers, Sche
 
 analyze_schedulable_nodes(MyNodeID, ParentSplitNodes, Schedulables, Unschedulables, LoopMarkers, Sched, Loader) ->
 	?f("node ~s analyze_schedulable_nodes", [pretty:string(MyNodeID)]),
-	timer:sleep(10),
+	%delay computation so that the debug output has a chance to appear in the terminal...
+	timer:sleep(20),
 	%
 	{OpenNodes, LoopMarkers2, MergedSched} = lists:foldl(
 		fun(ChildNodeID, {NewNodesAcc, LoopMarkersAcc, SchedAcc}) ->

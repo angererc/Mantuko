@@ -55,7 +55,7 @@ get_block_refs(#split_node_id{}=Loc, Sched) ->
 get_block_refs(#union_node_id{}=Loc, Sched) ->
 	split_node:get_block_refs(parent_split_node_id(Loc), Sched);
 get_block_refs(#atom_node_id{}=Loc, Sched) ->
-	atom_node:get_block(Loc, Sched), sets:new().
+	sets:add_element(atom_node:get_block_ref(Loc, Sched), sets:new()).
 		
 % -> set() | Value
 get_struct_locs(#split_node_id{}=Loc, Sched) ->
@@ -63,7 +63,7 @@ get_struct_locs(#split_node_id{}=Loc, Sched) ->
 get_struct_locs(#union_node_id{}=Loc, Sched) ->
 	split_node:get_struct_locs(parent_split_node_id(Loc), Sched);
 get_struct_locs(#atom_node_id{}=Loc, Sched) ->
-	atom_node:get_struct_loc(Loc, Sched), sets:new().
+	sets:add_element(atom_node:get_struct_loc(Loc, Sched), sets:new()).
 
 % for a split node it returns the union node ID
 node_as_edge_source(#split_node_id{}=ID) ->

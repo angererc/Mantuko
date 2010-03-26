@@ -59,10 +59,7 @@ block_ref -> colon ident :
 	#block_ref{nth=inc(nth), name=list_to_atom(unwrap('$2'))}.
 
 body -> instruction					: ['$1'].
-body -> instruction body	: case '$1' of
-									none -> '$2';
-									Else -> [Else|'$2']
-								  end.
+body -> instruction body	: ['$1'|'$2'].
 
 %%
 %% INSTRUCTIONS
@@ -189,7 +186,7 @@ nummeric_value_from_string_token({_, _, V}) ->
 		{ok, [{integer, _, Value}], _} ->
 			Value;
 		Some ->
-			tracer:fatal(?MODULE, nummeric_value_from_string_token, "Illegal nummeric value: ~p", [Some])
+			debug:fatal("Illegal nummeric value: ~p", [Some])
 	end.
 
 %*********************************
