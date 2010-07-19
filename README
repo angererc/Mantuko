@@ -1,4 +1,0 @@
-NOTE
-The project Mantuko as an analysis for explicit scheduling is discontinued in its current form. I started the XSched project (http://github.com/chmaruni/XSched) which implements explicit scheduling for Java plus an analysis integrated with Soot.
-
-I might reuse the mantuko name for some other (unrelated) project in the future.
