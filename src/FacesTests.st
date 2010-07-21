@@ -55,7 +55,7 @@ TestCase subclass: FacesValueTransformerTests [
 	setUp [
 		obj := Dictionary from: {#a -> 42. #three->#notyet}.
 		
-		lens := {#one->(#a transformReads:[:v| v asString] writes:[:v| v asInteger]).
+		lens := {#one->(#a transformReads:[:v| v printString] writes:[:v| v asInteger]).
 				#two->#b.}.
 	]
 	
@@ -95,7 +95,7 @@ TestCase subclass: FacesInternalFieldsTests [
 	setUp [
 		obj := Dictionary from: {#a -> 42}.
 		
-		lens := {#one->(#a transformReads:[:v| v asString] writes:[:v| v asInteger]).
+		lens := {#one->(#a transformReads:[:v| v printString] writes:[:v| v asInteger]).
 				#two->Face responsibility.
 				#three->(Face responsibility:'initial value').}.
 	]
@@ -117,7 +117,7 @@ TestCase subclass: FacesAccessorMethodsTests [
 	setUp [
 		obj := Dictionary from: {#a -> 42}.
 		
-		lens := {#one->(#a transformReads:[:v| v asString] writes:[:v| v asInteger]).
+		lens := {#one->(#a transformReads:[:v| v printString] writes:[:v| v asInteger]).
 				#two->Face responsibility.
 				#three->(Face responsibility:'initial value').}.
 	]
@@ -156,7 +156,7 @@ TestCase subclass: FacesObserveOldValuesTests [
 		obj := Dictionary from: {#a -> 42. #b->43.}.
 		
 		lens := {#one->#a.
-				#two->(#b transformReads:[:v| v asString] writes:[:v| v asInteger]).
+				#two->(#b transformReads:[:v| v printString] writes:[:v| v asInteger]).
 				#three->Face responsibility.}.
 	]
 	
