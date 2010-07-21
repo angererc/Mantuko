@@ -1,0 +1,19 @@
+<package>
+  <name>Mantuko</name>
+  <url>git://github.com/chmaruni/Mantuko.git</url>
+
+  <filein>SyntacticSugar.st</filein>
+  <filein>Kvc.st</filein>
+  <filein>Faces.st</filein>
+
+  <test>
+   <sunit>FacesBasicTests</sunit>
+   <sunit>FacesValueTransformerTests</sunit>
+   <filein>FacesTests.st</filein>
+   <file>FacesTests.st</file>
+  </test>
+
+  <file>SyntacticSugar.st</file>
+  <file>Kvc.st</file>
+  <file>Faces.st</file>
+</package>

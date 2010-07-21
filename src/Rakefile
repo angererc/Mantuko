@@ -1,0 +1,11 @@
+task :default => [:test, :install] do
+  #do it all
+end
+
+task :install do
+  sh 'gst-package --target-directory ~/.st package.xml'
+end
+
+task :test do
+  sh 'gst-sunit -f FacesTests.st FacesBasicTests FacesValueTransformerTests FacesInternalFieldsTests FacesAccessorMethodsTests FacesObserveOldValuesTests'
+end
