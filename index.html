@@ -49,15 +49,22 @@
       <span class="small">by <a href="http://github.com/chmaruni">chmaruni</a></span></h1>
 
     <div class="description">
-      a framework for analyzing and–hopefully some time–compiling parallel programs
+      a new programming-language (sort of)
     </div>
 
-    <p>Mantuko is a project that aims at analyzing fine-grained parallel programs. Until further notice, this project is rather incomplete, though; so do not expect to compile the sources and get anything useful out of it yet...</p><h2>Dependencies</h2>
-<p>Mantuko is written in Erlang R13B04 and uses make. There could be a dependency to the Lathos log server, but you have to check that on your own.</p>
+<p>
+	Mantuko is a combination of a programming paradigm (Faces), a concurrent programming technique (explicit scheduling), and maybe other stuff I find useful (to be done).
+</p>
+<h2>Is Mantuko a Programming Language?</h2>
+    <p>Mantuko was supposed to become a new programming language. However, not surprisingly it turned out that it makes so much more sense to adapt an existing language instead of designing a new one from scratch. And since Smalltalk is so amazingly flexible, it can be adapted without changing the language or the VM really. Therefore, Mantuko is not a real language but rather a Smalltalk library.</p>
+
+<h2>Dependencies</h2>
+<p>Mantuko is implemented in GNU Smalltalk. (I use version 3.2)</p>
 <h2>Install</h2>
-<p>Having Erlang installed, download or check out the source and type one of "make", "make doc", "make test".</p>
+<p>Having GNU Smalltalk installed, you can just type <code>rake install</code>. This will create a GNU Smalltalk 'star' file and place it in the ~/.st folder. From then on you can use <code>PackageLoader fileInPackage:'Mantuko'</code> in your Smalltalk programs.</p>
+<p>To run the tests (without installing the package), type <code>rake test</code></p>
 <h2>License</h2>
-<p>Mantuko is released under the MIT license.</p>
+<p>Mantuko is released under the LGPL license.</p>
 <h2>Authors</h2>
 <p>chmaruni (<img src="images/eaddr.png"/>)
 <br/>
